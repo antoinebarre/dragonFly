@@ -154,10 +154,10 @@ def test_fromList_2D():
         compare_ECEF(newPositions[idx],Tested_Array[idx])
 
 
-def test_toLLA():
+# def test_toLLA():
 
-    for pos in LLA4ECEF:
-        Pos
+#     for pos in LLA4ECEF:
+#         Pos
 
 
 
