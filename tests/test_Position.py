@@ -9,6 +9,15 @@ import pytest
 
 SIMPLE_LIST     = [10,20,30]
 
+# from https://www.convertecef.com
+LLA4ECEF = [
+    {"ECEF": [ 5117118.21, -1087677.05, 3638574.7 ],
+    "LLA"  : [35,-12,1234]}, #lat lon alt
+    {"ECEF": [ 1193872.96, 1584322.93, -6064737.91 ],
+    "LLA"  : [-72,53,22135]}]
+
+
+
 
 @pytest.fixture
 def simple_position():
@@ -143,6 +152,13 @@ def test_fromList_2D():
 
     for idx in range(3):
         compare_ECEF(newPositions[idx],Tested_Array[idx])
+
+
+def test_toLLA():
+
+    for pos in LLA4ECEF:
+        Pos
+
 
 
 

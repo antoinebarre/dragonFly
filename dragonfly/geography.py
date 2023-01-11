@@ -7,7 +7,16 @@ LIST OF CLASSES:
 """
 
 #MODULES IMPORT
-from dataclasses import dataclass
+import numpy as np
+
+
+#######################################################################################################################
+#                                                                                                                     #
+#                                                                                                                     #
+#                                                   CLASS POSITION                                                    #
+#                                                                                                                     #
+#                                                                                                                     #
+#######################################################################################################################
 
 
 class Position:
@@ -65,9 +74,17 @@ class Position:
         except ValueError:
             raise ValueError('"z" shall be a number') from None
 
-
+################################## IMPORTER ##################################
     @classmethod
     def fromList(cls,data:list):
+        """Create a instance of position (or a list) based on a list of cartesian position in ECEF reference
+
+        Args:
+            data (list): position X,Y,Z in meter (or a nested list of [X,Y,Z])
+
+        Returns:
+            object : position object or a list of position object
+        """
 
         #check if nested list:
         if any(isinstance(ix, list) for ix in data):
@@ -95,4 +112,69 @@ class Position:
 
         newObj = [Position.__from1DList(data) for data in datas]
         return newObj
+    
+    @classmethod
+    def fromLLA(cls, data,ellipsoid:str = "WGS84"):
+        pass
 
+################################## EXPORTER ##################################
+
+    def toLLA(self,ellipsoid:str = "WGS84"):
+        pass
+
+
+################################## UTILS ##################################
+
+    @classmethod
+    def transform_LLA2ECEF(longitude:np.ndarray,latitude:np.ndarray,altitude:np.ndarray,
+                        model:string="WGS84",radians:bool=True):
+        """calculate the cartesian coordinates based on the geodetic coordinates (ie. latitude, longitude, altitude)
+
+        Args:
+            longitude (np.ndarray): numpy array with latitudes in radians
+            latitude (np.ndarray): numpy array with latitudes in radians
+            altitude (np.ndarray): numpy array with the altitude in meters
+            model (string, optional): Ellipsoid model. Defaults to "WGS84". The available model are WGS72 and WGS84
+            radian (bool, optional): if False the latitudes and longitudes are provided in decimal degrees. Defaults to True.
+
+        Returns:
+            X,Y,Z : cartesian coordinates in ECEF as np.ndarray
+        """
+        # TODO : add argument assertion
+        
+        # Constants:
+        LISTMODEL = ["WGS84","WGS72"]
+        
+        # Argument assertion
+        assert model.upper() in (name.upper() for name in LISTMODEL) ,f"Ellipsoid model shall be part of the following list {LISTMODEL}"
+        assert isinstance(radians, (bool)) , "radians shall be a boolean"
+
+        # parameter management
+        match model.upper():
+            case "WGS84":
+                ellipsoid = gentraj.constant.WGS84
+            case "WGS72":
+                ellipsoid = gentraj.constant.WGS72
+
+        if radians == False: #change angle unit to radian
+            latitude =np.radians(latitude)
+            longitude = np.radians(longitude)
+
+        #Earth parameters
+        b = (1-ellipsoid["f"])*ellipsoid["a"]
+        e = np.sqrt((ellipsoid["a"]**2-b**2)/ellipsoid["a"]**2)
+        e2 = e**2
+        
+
+        # transofrmation algorithm
+        sinlat = np.sin(latitude)
+        coslat = np.cos(latitude)
+
+        N = ellipsoid["a"] / np.sqrt(1 - e2 * sinlat**2)
+
+        X = (N + altitude) * coslat * np.cos(longitude)
+        Y = (N + altitude) * coslat * np.sin(longitude)
+        Z = (N*(1 - e2) + altitude) * sinlat
+
+
+        return X,Y,Z
