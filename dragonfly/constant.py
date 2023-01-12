@@ -7,11 +7,10 @@ import math
 
 #############################################  EARTH MODELS  #############################################
 
-_ELLIPSOID = ["WGS84","TOTO"]
+_ELLIPSOID = ["WGS84"]
 
 _ELLIPSOID_PARAMETER =[
-    {"name":"WGS84","semiMajorAxis":  6378137.0,"inverseFlattening": 298.257223563 },
-    {"name":"TOTO","semiMajorAxis":  0,"inverseFlattening": 1 }
+    {"name":"WGS84","semiMajorAxis":  6378137.0,"inverseFlattening": 298.257223563 }
 ]
 
 
