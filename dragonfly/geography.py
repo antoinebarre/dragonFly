@@ -36,44 +36,19 @@ class Position:
         self.y = y
         self.z = z
 
-    @property
-    def x(self):
-        return self._x
+    def __getattr__(self, name: str):
+        return self.__dict__[f"_{name}"]
 
-    @x.setter
-    def x(self, value):
+    def __setattr__(self, name, value):
+        # see https://realpython.com/python-getter-setter/ for more details
+
         try:
-            self._x = float(value)
-        except TypeError:
-            raise TypeError('"x" shall be a scalar not a list or a tuple')
-        except ValueError:
-            raise ValueError('"x" shall be a number') from None
+            self.__dict__[f"_{name}"] = float(value)
 
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, value):
-        try:
-            self._y = float(value)
         except TypeError:
-            raise TypeError('"y" shall be a scalar not a list or a tuple')
+             raise TypeError(f'"{name}" shall be a scalar not a list or a tuple')
         except ValueError:
-            raise ValueError('"y" shall be a number') from None
-    
-    @property
-    def z(self):
-        return self._z
-
-    @z.setter
-    def z(self, value):
-        try:
-            self._z = float(value)
-        except TypeError:
-            raise TypeError('"z" shall be a scalar not a list or a tuple')
-        except ValueError:
-            raise ValueError('"z" shall be a number') from None
+             raise ValueError(f'"{name}" shall be a number') from None
 
 ################################## IMPORTER ##################################
     @classmethod
