@@ -118,9 +118,19 @@ class Position:
 ################################## EXPORTER ##################################
 
     def toLLA(self,ellipsoid:str = "WGS84"):
+        """return the geographic position (i.e. latitude, longitude and altitude) against an Ellipsoid model (by default WGS84)
+
+        Args:
+            ellipsoid (str, optional): Ellispoid reference. Defaults to "WGS84".
+
+        Returns:
+            float : latitude in radians
+            float : longitude in radians
+            float : altide in radians
+        """
         
         # voir https://github.com/kvenkman/ecef2lla/blob/master/ecef2lla.py
-        pass
+        return 0,0,0
 
 
 ################################## UTILS ##################################
