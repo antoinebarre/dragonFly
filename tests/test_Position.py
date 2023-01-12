@@ -164,9 +164,18 @@ def test_toLLA():
         #assess LLA
         compare_LLA(LLA_real,pos["LLA"])
 
+def test_FromLLA():
+    for pos in LLA4ECEF:
+        newPos = Position.fromLLA(np.deg2rad(pos["LLA"][0]),np.deg2rad(pos["LLA"][1]),pos["LLA"][2])
+
+        #compare ECEF
+        compare_ECEF(newPos,pos["ECEF"])
+
+
+
 ####################################  UTILS  ##############################################
 
-def compare_ECEF(position,X_expected):
+def compare_ECEF(position,X_expected,absTol = ABSOLUTE_TOLERANCE,reltol = RELATIVE_TOLERANCE):
     """Utility function used to compare a position vs the root data"""
 
     #extract fields
@@ -176,7 +185,10 @@ def compare_ECEF(position,X_expected):
 
     axes = ["x","y","z"]
     for idx in range(3):
-        assert X[idx]==X_expected[idx] , f"The value of the {axes[idx]} field shall be {X_expected[idx]} [current :{X[idx]}]"
+        message = f"{axes[idx]} [{X[idx]}] shall be equal to the expected {axes[idx]} [{X_expected[idx]}]\n" + \
+                    f"With the Absolute tolerance : {absTol}  and the relative tolerance {reltol}"
+
+        assert X[idx]== pytest.approx(X_expected[idx],abs=absTol,rel=reltol)  , f"The value of the {axes[idx]} field shall be {X_expected[idx]} [current :{X[idx]}]"
 
 def compare_LLA(LLA_real, LLA_expected,absTol = ABSOLUTE_TOLERANCE,reltol = RELATIVE_TOLERANCE):
 

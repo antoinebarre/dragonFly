@@ -10,6 +10,7 @@ LIST OF CLASSES:
 import numpy as np
 import math
 from  .constant import EarthModel
+from  .utils import assertInstance
 
 
 #######################################################################################################################
@@ -115,7 +116,44 @@ class Position:
     
     @classmethod
     def fromLLA(cls, lat:float,long:float,alt:float,ellipsoid:str = "WGS84"):
-        pass
+        """create a position object based on geodetic position (ie. latitude, longitude, altitude)
+
+        Args:
+            lat (float): latitude in radians
+            long (float): longitude in radians
+            alt (float): altitude in meters
+            ellipsoid (str, optional): Model of Earth Ellipsoid. Defaults to "WGS84".
+
+        Returns:
+            obj: instance of Position Class
+        """
+
+        #IO management
+        assertInstance("latitude",lat,(float,int,long))
+        assertInstance("longitude",long,(float,int,long))
+        assertInstance("altitude",alt,(float,int,long))
+
+
+        #create EarthModel
+        earth = EarthModel(ellipsoid)
+
+        #constante
+        a       = earth.a
+        e2      = earth.e**2
+
+        # transofrmation algorithm
+        sinlat = math.sin(lat)
+        coslat = math.cos(lat)
+
+        N = a / math.sqrt(1 - e2 * sinlat**2)
+
+        X = (N + alt) * coslat * np.cos(long)
+        Y = (N + alt) * coslat * np.sin(long)
+        Z = (N*(1 - e2) + alt) * sinlat
+
+
+        return Position(X,Y,Z)
+
 
 ################################## EXPORTER ##################################
 
@@ -139,8 +177,8 @@ class Position:
         b       = earth.b
         f       = earth.f
         e       = earth.e
-        e2      = e**2;       # Square of first eccentricity
-        ep2     = e2 / (1 - e2);    # Square of second eccentricity
+        e2      = e**2       # Square of first eccentricity
+        ep2     = e2 / (1 - e2)    # Square of second eccentricity
 
         # Longitude
         longitude   = math.atan2(self.y,self.x)
@@ -156,9 +194,6 @@ class Position:
         # (typically converges within two or three iterations)
         betaNew     = math.atan2((1 - f)*math.sin(phi), math.cos(phi))
         count       = 0
-
-
-       
 
         while beta != betaNew and count < 1000:
 
@@ -223,15 +258,4 @@ class Position:
     #     e2 = e**2
         
 
-    #     # transofrmation algorithm
-    #     sinlat = np.sin(latitude)
-    #     coslat = np.cos(latitude)
-
-    #     N = ellipsoid["a"] / np.sqrt(1 - e2 * sinlat**2)
-
-    #     X = (N + altitude) * coslat * np.cos(longitude)
-    #     Y = (N + altitude) * coslat * np.sin(longitude)
-    #     Z = (N*(1 - e2) + altitude) * sinlat
-
-
-    #     return X,Y,Z
+    #     
