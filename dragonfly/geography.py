@@ -83,9 +83,6 @@ class Position:
     def __fromNestedList(cls,datas:list):
         """PRIVATE METHOD : create Position from a Nested list"""
 
-        if not isinstance(datas,list):
-            raise TypeError(f"data shall be a list  [current: {type(datas)}] ")
-
         newObj = [Position.__from1DList(data) for data in datas]
         return newObj
     
