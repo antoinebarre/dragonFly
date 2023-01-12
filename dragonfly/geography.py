@@ -147,6 +147,7 @@ class Position:
 
         N = a / math.sqrt(1 - e2 * sinlat**2)
 
+        #Calculate ECEF position
         X = (N + alt) * coslat * np.cos(long)
         Y = (N + alt) * coslat * np.sin(long)
         Z = (N*(1 - e2) + alt) * sinlat
