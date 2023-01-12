@@ -5,6 +5,11 @@ collect all the utility fonction of dragonFly
 
 """
 
+#import module
+import numpy as np
+from scipy.spatial.transform import Rotation
+
+
 def assertInstance(data_name:str,data:str,expected_Instance:str)->None:
     """PRIVATE TOOLS - used to standardize the error message for Instance assessment in dragonFly
 
@@ -17,4 +22,18 @@ def assertInstance(data_name:str,data:str,expected_Instance:str)->None:
     if not isinstance(data,expected_Instance):
         message = f"{data_name} shall be of the following type(s) : {expected_Instance} [current{type(data)}] "
         raise TypeError(message)
+
+#-----------------------------------------------------------------------------
+# ROTATION MATRIX
+
+def rotx(theta:float)->np.ndarray:
+    """provide the rotational matrix of an angle of theta along the x axis
+
+    Args:
+        theta (float): angle of rotation defined in radians
+
+    Returns:
+        np.ndarray: rotational matrix [3x3]
+    """
+    return Rotation.from_rotvec(theta * np.array([1, 0, 0])).as_matrix()
 
