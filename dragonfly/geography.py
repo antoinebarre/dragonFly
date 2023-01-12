@@ -8,6 +8,8 @@ LIST OF CLASSES:
 
 #MODULES IMPORT
 import numpy as np
+import math
+from  .constant import EarthModel
 
 
 #######################################################################################################################
@@ -126,11 +128,56 @@ class Position:
         Returns:
             float : latitude in radians
             float : longitude in radians
-            float : altide in radians
+            float : altitude in radians
         """
         
+        #create EarthModel
+        earth = EarthModel(ellipsoid)
+
+        #constante
+        a       = earth.a
+        b       = earth.b
+        f       = earth.f
+        e       = earth.e
+        e2      = e**2;       # Square of first eccentricity
+        ep2     = e2 / (1 - e2);    # Square of second eccentricity
+
+        # Longitude
+        longitude   = math.atan2(self.y,self.x)
+
+        # Distance from Z-axis
+        D           = math.hypot(self.x,self.y)
+
+        # Bowring's formula for initial parametric (beta) and geodetic (phi) latitudes
+        beta        = math.atan2(self.z, (1 - f) * D)
+        phi         = math.atan2(self.z   + b * ep2 * math.sin(beta)**3, D - a * e2  * math.cos(beta)**3)
+
+        #Fixed-point iteration with Bowring's formula
+        # (typically converges within two or three iterations)
+        betaNew     = math.atan2((1 - f)*math.sin(phi), math.cos(phi))
+        count       = 0
+
+
+       
+
+        while beta != betaNew and count < 1000:
+
+            beta = betaNew
+            phi = math.atan2(self.z   + b * ep2 * math.sin(beta)**3,D - a * e2  * math.cos(beta)**3)
+            betaNew = math.atan2((1 - f)*math.sin(phi), math.cos(phi))
+            count += 1
+        
+
+        # Calculate ellipsoidal height from the final value for latitude
+        sinphi = math.sin(phi)
+        N = a / math.sqrt(1 - e2 * sinphi**2)
+        altitude = D * math.cos(phi) + (self.z + e2 * N * sinphi) * sinphi - N
+
+        latitude = phi
+   
+
         # voir https://github.com/kvenkman/ecef2lla/blob/master/ecef2lla.py
-        return 0,0,0
+        return latitude,longitude,altitude
 
 
 ################################## UTILS ##################################

@@ -6,13 +6,14 @@
 # MODULE IMPORT
 from dragonfly.geography import Position
 import pytest
+import numpy as np
 
 
-ABSOLUTE_TOLERANCE = 1e-12
-RELATIVE_TOLERANCE = 1e-6
+ABSOLUTE_TOLERANCE  = 1e-12
+RELATIVE_TOLERANCE  = 1e-6
 
 
-SIMPLE_LIST     = [10,20,30]
+SIMPLE_LIST         = [10,20,30]
 
 
 
@@ -181,8 +182,10 @@ def compare_LLA(LLA_real, LLA_expected,absTol = ABSOLUTE_TOLERANCE,reltol = RELA
 
     typeLLA = ["Latitude","Longiture","Altidue"]
 
-    for idx in range(3):
+    # change from rad to deg
+    LLA_real = [np.rad2deg(LLA_real[0]),np.rad2deg(LLA_real[1]),LLA_real[2]]
 
+    for idx in range(3):
         message = f"{typeLLA[idx]} [{LLA_real[idx]}] shall be equal to the expected {typeLLA[idx]} [{LLA_expected[idx]}]\n" + \
                     f"With the Absolute tolerance : {absTol}  and the relative tolerance {reltol}"
 
