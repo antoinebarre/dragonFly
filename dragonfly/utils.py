@@ -17,3 +17,4 @@ def assertInstance(data_name:str,data:str,expected_Instance:str)->None:
     if not isinstance(data,expected_Instance):
         message = f"{data_name} shall be of the following type(s) : {expected_Instance} [current{type(data)}] "
         raise TypeError(message)
+
