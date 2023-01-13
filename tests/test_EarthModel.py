@@ -24,6 +24,11 @@ def test_EarthModel():
 
             assert False, f'creation of the model {model["name"]} raised an error {exc}'
         
+       
+        #check Earth rotation rate
+        msg = f'Inapropriate earth rotational rate'
+        assert model2test.earthRotationRate == pytest.approx(7.292115E-5,abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
+       
         # assert semi major axis
         msg = f'Inapropriate Semi major value for {model["name"]}'
         assert model2test.a== pytest.approx(model["a"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg

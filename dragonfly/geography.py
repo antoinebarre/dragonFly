@@ -7,18 +7,19 @@ LIST OF CLASSES:
 """
 
 #MODULES IMPORT
+import datetime
 import numpy as np
 import math
 from  .constant import EarthModel
 from  .utils import assertInstance
+from .utils import rotx, roty, rotz
 
-
-#######################################################################################################################
-#                                                                                                                     #
-#                                                   CLASS POSITION                                                    #
-#                                                                                                                     #
-#######################################################################################################################
-
+""" 
+888b. .d88b. .d88b. 888 88888 888 .d88b. 8b  8    .d88b 8       db    .d88b. .d88b. 
+8  .8 8P  Y8 YPwww.  8    8    8  8P  Y8 8Ybm8    8P    8      dPYb   YPwww. YPwww. 
+8wwP' 8b  d8     d8  8    8    8  8b  d8 8  "8    8b    8     dPwwYb      d8     d8 
+8     `Y88P' `Y88P' 888   8   888 `Y88P' 8   8    `Y88P 8888 dP    Yb `Y88P' `Y88P'
+"""
 
 class Position:
     """Class for the management of ECEF position
@@ -186,3 +187,37 @@ class Position:
 
         # voir https://github.com/kvenkman/ecef2lla/blob/master/ecef2lla.py
         return latitude,longitude,altitude
+
+
+
+"""
+888b. .d88b. 88888    db    88888 888 .d88b. 8b  8    8b   d8    db    88888 888b. 888 Yb  dP 
+8  .8 8P  Y8   8     dPYb     8    8  8P  Y8 8Ybm8    8YbmdP8   dPYb     8   8  .8  8   YbdP  
+8wwK' 8b  d8   8    dPwwYb    8    8  8b  d8 8  "8    8  "  8  dPwwYb    8   8wwK'  8   dPYb  
+8  Yb `Y88P'   8   dP    Yb   8   888 `Y88P' 8   8    8     8 dP    Yb   8   8  Yb 888 dP  Yb
+"""
+
+def DCM_ECI2ECEF(dt:datetime)->np.ndarray:
+    """Provide the Direct Cosine Matrix to convert Earth-centered inertial (ECI) to Earth-centered Earth-fixed (ECEF) coordinates
+
+
+    The Earth-centered inertial (ECI) system is non-rotating. For most applications, assume this frame to be inertial, although the equinox and equatorial plane move very slightly over time. The ECI system is considered to be truly inertial for high-precision orbit calculations when the equator and equinox are defined at a particular epoch (e.g. J2000). Aerospace functions and blocks that use a particular realization of the ECI coordinate system provide that information in their documentation. The ECI system origin is fixed at the center of the Earth (see figure).
+
+    - The x-axis points towards the vernal equinox (First Point of Aries ♈).
+    - The y-axis points 90 degrees to the east of the x-axis in the equatorial plane.
+    - The z-axis points northward along the Earth rotation axis.
+
+    
+    Args:
+        tc (float): time in second since the user defined the Earth Center Intertial (ECI) frame. This value shall be positive (>=0)
+        
+    Returns:
+        np.ndarray: rotational matrix [3x3] to transform a vector in ECI in the ECEF frame
+    """
+
+
+    # voir https://github.com/NavPy/NavPy/blob/master/navpy/core/navpy.py
+
+
+       
+    return np.ndarray((3,3))

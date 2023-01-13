@@ -15,6 +15,8 @@ _ELLIPSOID_PARAMETER =[
 
 
 class EarthModel():
+
+    earthRotationRate = 72.92115E-6 #rotation rate from the WGS84
    
     def __init__(self,model) -> None:
         self.model = model.upper()
