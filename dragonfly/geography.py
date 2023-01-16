@@ -219,7 +219,7 @@ def DCM_ECI2ECEF(dt:float)->np.ndarray:
        
     return rotz(EarthModel.earthRotationRate*dt)
 
-def DCM_ECEF2NED(latitude:float,longitude:float)-> np.ndarray:
+def dcm_ecef2ned(latitude:float,longitude:float)-> np.ndarray:
     """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
     NED (North Earth Down) to transform a vector defined in ECEF to NED frame
 
@@ -234,3 +234,20 @@ def DCM_ECEF2NED(latitude:float,longitude:float)-> np.ndarray:
     M = np.matmul(roty(-(latitude+np.pi/2)),rotz(longitude))
        
     return M
+
+
+def dcm_ecef2enu(latitude:float,longitude:float)-> np.ndarray:
+    """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
+    ENU (East North Up) to transform a vector defined in ECEF to NED frame
+
+    Args:
+        latitude (float): latitude of the geographical point in radians
+        longitude (float): longitude of the geographical point in radians
+
+    Reference: 
+        https://gssc.esa.int/navipedia/index.php/Transformations_between_ECEF_and_ENU_coordinates
+
+    Returns:
+        np.ndarray: Direct Cosinus Matrix from ECEF to ENU
+    """
+    return rotx(np.pi/2)@rotz(np.pi/2)@roty(-latitude)@rotz(longitude)#np.matmul(roty(-latitude+np.pi/2),rotz(np.pi/2+longitude))
