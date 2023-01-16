@@ -35,10 +35,10 @@ def test_rotx_behaviour():
     
     testCases = [
         [90, np.array([10,0,0]), np.array([10,0,0])],
-        [90, np.array([0,9,0]), np.array([0,0,9])],
-        [90, np.array([0,0,4]), np.array([0,-4,0])],
+        [90, np.array([0,9,0]), np.array([0,0,-9])],
+        [90, np.array([0,0,4]), np.array([0,4,0])],
         [180, np.array([0,3,0]), np.array([0,-3,0])],
-        [270, np.array([0,3,0]), np.array([0,0,-3])],
+        [270, np.array([0,3,0]), np.array([0,0,3])],
     ]
 
     for testCase in testCases:
@@ -61,10 +61,10 @@ def test_roty_behaviour():
     
     testCases = [
         [90, np.array([0,10,0]), np.array([0,10,0])],
-        [90, np.array([4,0,0]), np.array([0,0,-4])],
-        [90, np.array([0,0,4]), np.array([4,0,0])],
+        [90, np.array([4,0,0]), np.array([0,0,4])],
+        [90, np.array([0,0,4]), np.array([-4,0,0])],
         [180, np.array([3,0,0]), np.array([-3,0,0])],
-        [270, np.array([3,0,0]), np.array([0,0,3])],
+        [270, np.array([3,0,0]), np.array([0,0,-3])],
     ]
 
     for testCase in testCases:
@@ -87,10 +87,10 @@ def test_rotz_behaviour():
     
     testCases = [
         [90, np.array([0,0,10]), np.array([0,0,10])],
-        [90, np.array([4,0,0]), np.array([0,4,0])],
-        [90, np.array([0,4,0]), np.array([-4,0,0])],
+        [90, np.array([4,0,0]), np.array([0,-4,0])],
+        [90, np.array([0,4,0]), np.array([4,0,0])],
         [180, np.array([3,0,0]), np.array([-3,0,0])],
-        [270, np.array([3,0,0]), np.array([0,-3,0])],
+        [270, np.array([3,0,0]), np.array([0,3,0])],
     ]
 
     for testCase in testCases:

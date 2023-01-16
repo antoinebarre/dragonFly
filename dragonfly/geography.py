@@ -197,7 +197,7 @@ class Position:
 8  Yb `Y88P'   8   dP    Yb   8   888 `Y88P' 8   8    8     8 dP    Yb   8   8  Yb 888 dP  Yb
 """
 
-def DCM_ECI2ECEF(dt:datetime)->np.ndarray:
+def DCM_ECI2ECEF(dt:float)->np.ndarray:
     """Provide the Direct Cosine Matrix to convert Earth-centered inertial (ECI) to Earth-centered Earth-fixed (ECEF) coordinates
 
 
@@ -209,15 +209,28 @@ def DCM_ECI2ECEF(dt:datetime)->np.ndarray:
 
     
     Args:
-        tc (float): time in second since the user defined the Earth Center Intertial (ECI) frame. This value shall be positive (>=0)
+        dt (float): time in second since the user defined the Earth Center Intertial (ECI) frame. This value shall be positive (>=0)
         
     Returns:
         np.ndarray: rotational matrix [3x3] to transform a vector in ECI in the ECEF frame
     """
 
-
     # voir https://github.com/NavPy/NavPy/blob/master/navpy/core/navpy.py
-
-
        
-    return np.ndarray((3,3))
+    return rotz(EarthModel.earthRotationRate*dt)
+
+def DCM_ECEF2NED(latitude:float,longitude:float)-> np.ndarray:
+    """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
+    NED (North Earth Down) to transform a vector defined in ECEF to NED frame
+
+    Args:
+        latitude (float): latitude of the geographical point in radians
+        longitude (float): longitude of the geographical point in radians
+
+    Returns:
+        np.ndarray: Direct Cosinus Matrix from ECEF to NED
+    """
+
+    M = np.matmul(roty(-(latitude+np.pi/2)),rotz(longitude))
+       
+    return M
