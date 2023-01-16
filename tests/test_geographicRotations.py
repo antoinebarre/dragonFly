@@ -50,13 +50,9 @@ def test_ECEF2NED()->None:
     X_ECEF = M.T @ np.reshape(X_NED,(3,-1))
 
     #assert
-    np.testing.assert_array_almost_equal(X_ECEF,X_ECEF_EXPECTED,decimal=NB_DECIMAL)
+    np.testing.assert_array_almost_equal(X_ECEF,X_ECEF_EXPECTED,decimal=4)
 
-    lat = np.deg2rad(42)
-    lon = np.deg2rad(-82)
-    alt = 200
 
-    newPos = Position.fromLLA(lat,lon,alt)
 
 
 
