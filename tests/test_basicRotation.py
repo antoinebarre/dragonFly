@@ -21,6 +21,14 @@ def randomAngleArray():
                                          size=NB_OBJ) #number of elements
 
 
+def test_rotx_error():
+    """Check appropriate behavior with wrong inputs
+    """
+    with pytest.raises(ValueError):
+        rotx("a")
+    with pytest.raises(TypeError):
+        rotx([1,2])
+
 def test_rotx_determinant(randomAngleArray):
     """The function rotx shall have a determinant equal to 1
     """
@@ -73,6 +81,14 @@ def test_roty_behaviour():
         #assess:
         compare_column_vector(X,testCase[2])
 
+def test_roty_error():
+    """Check appropriate behavior with wrong inputs
+    """
+    with pytest.raises(ValueError):
+        roty("a")
+    with pytest.raises(TypeError):
+        roty([1,2])
+
 def test_rotz_determinant(randomAngleArray):
     """The function roty shall have a determinant equal to 1
     """
@@ -98,6 +114,14 @@ def test_rotz_behaviour():
         X = apply_rotz(testCase[0], testCase[1])
         #assess:
         compare_column_vector(X,testCase[2])
+
+def test_rotz_error():
+    """Check appropriate behavior with wrong inputs
+    """
+    with pytest.raises(ValueError):
+        rotz("a")
+    with pytest.raises(TypeError):
+        rotz([1,2])
 
 #---------------- TOOLS ----------------
 def compare_column_vector(X,X_expected,nb_digit= NB_DECIMAL):

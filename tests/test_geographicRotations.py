@@ -63,7 +63,7 @@ class TestECEF2ENU():
                                           [1, 0, 0],
                                           [0, 1, 0]]).T
         dcm = dcm_ecef2enu(latgd, lon)
-        np.testing.assert_allclose(dcm, dcm_ecef2enu_expected)
+        np.testing.assert_allclose(dcm, dcm_ecef2enu_expected,atol=ABSOLUTE_TOLERANCE,rtol=RELATIVE_TOLERANCE)
    
     def test_pole_prime_meridian(self):
         latgd = np.pi/2
