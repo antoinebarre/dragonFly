@@ -238,7 +238,7 @@ def dcm_ecef2ned(latitude:float,longitude:float)-> np.ndarray:
 
 def dcm_ecef2enu(latitude:float,longitude:float)-> np.ndarray:
     """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
-    ENU (East North Up) to transform a vector defined in ECEF to NED frame
+    ENU (East North Up) to transform a vector defined in ECEF to ENU frame
 
     Args:
         latitude (float): latitude of the geographical point in radians
@@ -250,4 +250,57 @@ def dcm_ecef2enu(latitude:float,longitude:float)-> np.ndarray:
     Returns:
         np.ndarray: Direct Cosinus Matrix from ECEF to ENU
     """
+
     return rotx(np.pi/2)@rotz(np.pi/2)@roty(-latitude)@rotz(longitude)#np.matmul(roty(-latitude+np.pi/2),rotz(np.pi/2+longitude))
+
+def angle2dcm(rotAngle1:float,rotAngle2:float,rotAngle3:float, rotationSequence:str='ZYX')->np.ndarray:
+    """This function converts Euler Angle into Direction Cosine Matrix (DCM).
+        The DCM is described by three sucessive rotation rotAngle1, rotAngle2, and rotAngle3 about the axes described by the rotation_sequence.
+        The default rotation_sequence='ZYX' is the aerospace sequence and rotAngle1 is the yaw angle, rotAngle2 is the pitch angle, and rotAngle3 is the roll angle. In this case DCM transforms a vector from the locally level coordinate frame (i.e. the NED frame) to the body frame.
+
+    Args:
+        rotAngle1 (float): first angle of roation in radians (e.g. yaw for 'ZYX')
+        rotAngle2 (float): second angle of roation in radians (e.g. pitch for 'ZYX')
+        rotAngle3 (float): third angle of roation in radians (e.g. roll for 'ZYX')
+        rotationSequence (str, optional): sequence of rotations. Defaults to 'ZYX'.
+
+    Returns:
+        np.ndarray: direction cosine matrix associated to the rotation angles
+    """
+
+    if rotationSequence.upper()=="ZYX":
+        return rotx(rotAngle3)@roty(rotAngle2)@rotz(rotAngle1)
+    else:
+        msg =f"Rotation sequence {rotationSequence.upper()} is not implemented."
+        raise NotImplementedError(msg)
+
+def dcm2angle(dcm:np.ndarray, rotationSequence:str='ZYX')->tuple[float,float,float]:
+    """This function converts a Direction Cosine Matrix (DCM) into the three rotation angles.
+    The DCM is described by three sucessive rotation rotAngle1, rotAngle2, and rotAngle3 about the axes described by the rotation_sequence.
+    The default rotation_sequence='ZYX' is the aerospace sequence and rotAngle1 is the yaw angle, rotAngle2 is the pitch angle, and rotAngle3 is the roll angle. In this case DCM transforms a vector from the locally level coordinate frame (i.e. the NED frame) to the body frame.
+
+    Notes:
+    The returned rotAngle1 and 3 will be between   +/- 180 deg (+/- pi rad).
+    In contrast, rotAngle2 will be in the interval +/- 90 deg (+/- pi/2 rad). In the 'ZYX' or '321' aerospace sequence, that means the pitch angle returned will always be inside the closed interval +/- 90 deg (+/- pi/2 rad).
+    Applications where pitch angles near or larger than 90 degrees in magnitude are expected should used alternate attitude parameterizations like quaternions.
+
+    Args:
+        dcm (np.ndarray): direction cosine matrix associated to the rotation angles
+        rotationSequence (str, optional): sequence of rotations. Defaults to 'ZYX'.
+
+    Returns:
+        rotAngle1 (float): first angle of roation in radians (e.g. yaw for 'ZYX')
+        rotAngle2 (float): second angle of roation in radians (e.g. pitch for 'ZYX')
+        rotAngle3 (float): third angle of roation in radians (e.g. roll for 'ZYX')
+    """
+
+
+    if rotationSequence.upper()=="ZYX":
+        rotAngle1 = np.arctan2(dcm[0, 1], dcm[0, 0])   # Yaw
+        rotAngle2 = -np.arcsin(dcm[0, 2])  # Pitch
+        rotAngle3 = np.arctan2(dcm[1, 2], dcm[2, 2])  # Roll
+
+        return rotAngle1,rotAngle2,rotAngle3
+    else:
+        msg =f"Rotation sequence {rotationSequence.upper()} is not implemented."
+        raise NotImplementedError(msg)
