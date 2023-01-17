@@ -253,4 +253,23 @@ def dcm_ecef2enu(latitude:float,longitude:float)-> np.ndarray:
 
     return rotx(np.pi/2)@rotz(np.pi/2)@roty(-latitude)@rotz(longitude)#np.matmul(roty(-latitude+np.pi/2),rotz(np.pi/2+longitude))
 
+def angle2dcm(rotAngle1:float,rotAngle2:float,rotAngle3:float, rotationSequence:str='ZYX')->np.ndarray:
+    """This function converts Euler Angle into Direction Cosine Matrix (DCM).
+        The DCM is described by three sucessive rotation rotAngle1, rotAngle2, and rotAngle3 about the axes described by the rotation_sequence.
+        The default rotation_sequence='ZYX' is the aerospace sequence and rotAngle1 is the yaw angle, rotAngle2 is the pitch angle, and rotAngle3 is the roll angle. In this case DCM transforms a vector from the locally level coordinate frame (i.e. the NED frame) to the body frame.
 
+    Args:
+        rotAngle1 (float): first angle of roation in radians (e.g. yaw for 'ZYX')
+        rotAngle2 (float): second angle of roation in radians (e.g. pitch for 'ZYX')
+        rotAngle3 (float): third angle of roation in radians (e.g. roll for 'ZYX')
+        rotationSequence (str, optional): sequence of rotation. Defaults to 'ZYX'.
+
+    Returns:
+        np.ndarray: direction cosine matrix associated to the rotation angles
+    """
+
+    if rotationSequence.upper()=="ZYX":
+        return rotx(rotAngle3)@roty(rotAngle2)@rotz(rotAngle1)
+    else:
+        msg =f"Rotation sequence {rotationSequence.upper()} is not implemented."
+        raise NotImplementedError(msg)

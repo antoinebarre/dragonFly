@@ -188,7 +188,7 @@ def compare_ECEF(position,X_expected,absTol = ABSOLUTE_TOLERANCE,reltol = RELATI
         message = f"{axes[idx]} [{X[idx]}] shall be equal to the expected {axes[idx]} [{X_expected[idx]}]\n" + \
                     f"With the Absolute tolerance : {absTol}  and the relative tolerance {reltol}"
 
-        assert X[idx]== pytest.approx(X_expected[idx],abs=absTol,rel=reltol)  , f"The value of the {axes[idx]} field shall be {X_expected[idx]} [current :{X[idx]}]"
+        assert X[idx]== pytest.approx(X_expected[idx],abs=absTol,rel=reltol)  , message
 
 def compare_LLA(LLA_real, LLA_expected,absTol = ABSOLUTE_TOLERANCE,reltol = RELATIVE_TOLERANCE):
 
