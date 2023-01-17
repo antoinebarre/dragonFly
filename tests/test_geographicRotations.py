@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 
-from dragonfly.geography import DCM_ECI2ECEF, dcm_ecef2ned, dcm_ecef2enu, angle2dcm
+from dragonfly.geography import DCM_ECI2ECEF, dcm_ecef2ned, dcm_ecef2enu, angle2dcm, dcm2angle
 
 
 ABSOLUTE_TOLERANCE = 1e-12
@@ -128,7 +128,28 @@ class test_angle2dcm():
         with pytest.raises(NotImplementedError):
             print(angle2dcm(0,0,0,"XYZ"))
             
-               
+def test_dcm2angle_ZYX():
+    """test dcm2angle with ZYX rotation
+    """
+    # Define (expected) Euler angles and associated DCM (Rnav2body)
+    yaw, pitch, roll = np.deg2rad([-83, 2.3, 13]) # degrees
+    
+    Rnav2body = np.array([[ 0.121771, -0.991747, -0.040132],
+                            [ 0.968207,  0.109785,  0.224770],
+                            [-0.218509, -0.066226,  0.973585]])
+    
+    yaw_C, pitch_C, roll_C = dcm2angle(Rnav2body)
+
+    # Assess
+    np.testing.assert_almost_equal([yaw_C, pitch_C, roll_C], [yaw, pitch, roll], decimal=4)
+
+def test_angle2dcm_error():
+    "test only ZYX feature is implemented"
+    with pytest.raises(NotImplementedError):
+        print(dcm2angle(np.ndarray((3,3)),rotationSequence="XYZ"))
+
+
+
 
 
 
