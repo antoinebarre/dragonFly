@@ -35,7 +35,7 @@ def rotx(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([1, 0, 0])).as_matrix()
+    return Rotation.from_rotvec(theta * np.array([1, 0, 0])).as_matrix().T
 
 def roty(theta:float)->np.ndarray:
     """provide the rotational matrix of an angle of theta along the y axis
@@ -46,7 +46,7 @@ def roty(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([0, 1, 0])).as_matrix()
+    return Rotation.from_rotvec(theta * np.array([0, 1, 0])).as_matrix().T
 
 def rotz(theta:float)->np.ndarray:
     """provide the rotational matrix of an angle of theta along the z axis
@@ -57,4 +57,4 @@ def rotz(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([0, 0, 1])).as_matrix()
+    return Rotation.from_rotvec(theta * np.array([0, 0, 1])).as_matrix().T
