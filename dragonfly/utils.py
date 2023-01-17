@@ -85,15 +85,20 @@ def __input_check_3x1(x_in):
         return np.reshape(np.array(x_in),(3,-1))
     else:
         msg = __createErrorMessageData("The input shall be mutable to a [3x1] numpy array",x_in)
-        raise ValueError("bad value")
+        raise ValueError(msg)
 
-def ___input_check_3x1(x_in):
-    pass
+def __input_check_3x3(x_in):
+    """PRIVATE FUNCTION - check if the input is a [3x3] numpy array"""
+    if isinstance(x_in,np.ndarray) and x_in.shape == (3,3):
+        return x_in
+    else: 
+        msg = __createErrorMessageData("The input shall a [3x3] numpy array",x_in)
+        raise ValueError(msg)
 
-
-
+# ===============================  TOOLS  ====================================
 
 def __createErrorMessageData(errorMsg,value):
     msg = f"{errorMsg}\n" + \
         f"Current Value    : {value}\n" +\
         f"Curent Data Type : {type(value)}"
+    return msg 
