@@ -35,7 +35,7 @@ def rotx(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([1, 0, 0])).as_matrix().T
+    return __fundamentalRotation(np.array([1, 0, 0]),theta)
 
 def roty(theta:float)->np.ndarray:
     """provide the rotational matrix of an angle of theta along the y axis
@@ -46,7 +46,7 @@ def roty(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([0, 1, 0])).as_matrix().T
+    return __fundamentalRotation(np.array([0, 1, 0]),theta)
 
 def rotz(theta:float)->np.ndarray:
     """provide the rotational matrix of an angle of theta along the z axis
@@ -57,4 +57,17 @@ def rotz(theta:float)->np.ndarray:
     Returns:
         np.ndarray: rotational matrix [3x3]
     """
-    return Rotation.from_rotvec(theta * np.array([0, 0, 1])).as_matrix().T
+    return __fundamentalRotation(np.array([0, 0, 1]),theta)
+
+def __fundamentalRotation(axis:np.ndarray,theta)->np.ndarray:
+    """PRIVATE FUNCTION - create rotation matrix based on angle and axis"""
+
+    try:
+        theta = float(theta)
+        return Rotation.from_rotvec(theta * axis).as_matrix().T    
+    except TypeError:
+        raise TypeError('The angle of rotation shall be a scalar not a list or a tuple')
+    except ValueError:
+        raise ValueError('The angle shall be a number')
+
+    
