@@ -26,10 +26,12 @@ def test_equator_WGS84():
   
 
     g_list =  Gravity.fromLLA(0,0,0).toList()
-    np.testing.assert_array_almost_equal(g_list,g_expected)
+    np.testing.assert_allclose(g_list,g_expected,
+            atol=ABSOLUTE_TOLERANCE,rtol=RELATIVE_TOLERANCE)
 
     g_np = Gravity.fromLLA(0,0,0).toNumpy()
-    np.testing.assert_array_almost_equal(g_np,g_expected_np )
+    np.testing.assert_allclose(g_np,g_expected_np,
+            atol=ABSOLUTE_TOLERANCE,rtol=RELATIVE_TOLERANCE)
 
     #[ i_real == pytest.approx(i_expected, rel=RELATIVE_TOLERANCE, abs=ABSOLUTE_TOLERANCE) for i_real, i_expected in zip(g_list,g_expected)]
 

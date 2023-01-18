@@ -10,7 +10,7 @@ LIST OF CLASSES:
 import datetime
 import numpy as np
 import math
-from  .constant import EarthModel
+from  .constant import EarthModel,_DEFAULT_MODEL
 from  .utils import assertInstance
 from .utils import rotx, roty, rotz
 
@@ -51,6 +51,23 @@ class Position:
         except ValueError:
              raise ValueError(f'"{name}" shall be a number') from None
 
+    def __repr__(self):
+        """internal method for the print"""
+        return f"ECEF Coordinates:\nx : {self.x}\ny : {self.y}\nz : {self.z}"
+    
+    def __eq__(self, __o: object) -> bool:
+        """internal method for equality"""
+        if isinstance(__o, Position):
+            return (self.x, self.y, self.z) == (__o.x, __o.y,__o.z)
+        raise NotImplementedError(f"Class Position equality with this data type [{type(__o)} is not implemented]")
+
+
+    def __sub__(self, __o: object) -> bool:
+        """internal method for equality"""
+        if isinstance(__o, Position):
+            return Position(self.x-__o.x,self.y-__o.y, self.z-__o.z)
+        raise NotImplementedError(f"Class Position equality with this data type [{type(__o)} is not implemented]")
+
 ################################## IMPORTER ##################################
     @classmethod
     def fromList(cls,data:list):
@@ -88,7 +105,7 @@ class Position:
         return newObj
     
     @classmethod
-    def fromLLA(cls, lat:float,long:float,alt:float,ellipsoid:str = "WGS84"):
+    def fromLLA(cls, lat:float,long:float,alt:float,ellipsoid:str = _DEFAULT_MODEL):
         """create a position object based on geodetic position (ie. latitude, longitude, altitude)
 
         Args:
@@ -136,7 +153,15 @@ class Position:
 
 ################################## EXPORTER ##################################
 
-    def toLLA(self,ellipsoid:str = "WGS84"):
+    def toNumpy(self):
+        """Provide Postion ECEF vector as a numpy vector
+
+        Returns:
+            np.ndarray : column vector [3x1] of the ECEF coordinates
+        """
+        return np.reshape(np.array([self.x,self.y,self.z]),(3,-1))
+
+    def toLLA(self,ellipsoid:str = _DEFAULT_MODEL):
         """return the geographic position (i.e. latitude, longitude and altitude) against an Ellipsoid model (by default WGS84)
 
         Args:
