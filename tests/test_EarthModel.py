@@ -1,7 +1,7 @@
 """UNIT TEST FOR EARTH MODEL"""
 
 EXPECTED_VALUES = [
-    {"name":"WGS84", "a": 6378137.0 , "f": 1/298.257223563, "b":6356752.314245179497563967, "e": 0.081819190842622 # SOURCE : https://fr.wikipedia.org/wiki/WGS_84
+    {"name":"WGS84", "a": 6378137.0 , "f": 1/298.257223563, "b":6356752.314245179497563967, "e": 0.081819190842622,"mu":3.986005E+14, "j2":1.08263E-3 # SOURCE : https://fr.wikipedia.org/wiki/WGS_84
     }
 ]
 
@@ -29,6 +29,17 @@ def test_EarthModel():
         msg = f'Inapropriate earth rotational rate'
         assert model2test.earthRotationRate == pytest.approx(7.292115E-5,abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
        
+        #check Earth rotation rate
+        msg = f'Inapropriate gravitational constant'
+        assert model2test.mu == pytest.approx(model["mu"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
+       
+        #check Earth rotation rate
+        msg = f'Inapropriate second gravitational constant'
+        assert model2test.j2 == pytest.approx(model["j2"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
+       
+
+
+
         # assert semi major axis
         msg = f'Inapropriate Semi major value for {model["name"]}'
         assert model2test.a== pytest.approx(model["a"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
