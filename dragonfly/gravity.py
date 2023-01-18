@@ -2,71 +2,80 @@
 ###############################   GRAVITY MODEL  ###############################
 """
 
-""" EXEMPLE GENTRAJ :
-CALCUL DU CHAMP DE GRAVITATION TERRESTRE
-
-c	constantes utilisees
-
-	if (tersph) then
-	   j2=0.d0
-	else
-	   j2=1.08263d-3	
-	endif
-
-c	calcul de g (grav) dans le repere 1 a partir d'un developpement
-c	limite au second ordre du potentiel terrestre
-c	U=mu/rho*(1d0-j2*(rt/rho)**2*(3d0*sinphi**2-1d0)/2d0)
-
-	call car2sph(pos,rho,lambda,phi)
-	r1=rt/rho
-	r2=r1*r1
-	sin1=sin(phi)
-	sin2=sin1*sin1
-
-	k0=-(mu/rho**3)
-	k1=k0*(1d0-1.5d0*j2*r2*(5d0*sin2-1d0))
-	k2=k0*(1d0-1.5d0*j2*r2*(5d0*sin2-3d0))
-
-	grav(1)=k1*pos(1)
-	grav(2)=k1*pos(2)
-	grav(3)=k2*pos(3)
-
-
-
-    EXEMPLE MATLAB
-
-    gt(:,1)=-mu./r.^2.*(1+3/2*J2.*(a./r).^2.*(1-5.*(POS_ECEF(:,3)./r).^2)).*POS_ECEF(:,1)./r;
-    gt(:,2)=-mu./r.^2.*(1+3/2*J2.*(a./r).^2.*(1-5.*(POS_ECEF(:,3)./r).^2)).*POS_ECEF(:,2)./r;
-    gt(:,3)=-mu./r.^2.*(1+3/2*J2.*(a./r).^2.*(3-5.*(POS_ECEF(:,3)./r).^2)).*POS_ECEF(:,3)./r;
-
-"""
-
 #Import Module
 from .geography import Position
+from .constant import EarthModel, _DEFAULT_MODEL
+import numpy as np
 
-class Gravite():
-    def __init__(self,earthModel:str='WGS84',x_ECEF:float=0,y_ECEF:float=0,z_ECEF:float=0):
-
-
-
-        pass
-
+class Gravity():
+    def __init__(self,x_ECEF:float,y_ECEF:float,z_ECEF:float,earthModel:str=_DEFAULT_MODEL):
+        
+        self.__positionECEF = Position(x_ECEF,y_ECEF,z_ECEF)
+        self.__model = earthModel
+ 
     @classmethod
-    def fromECEF(cls,x:float,y:float,z:float):
-        pass
+    def fromPosition(cls,pos:Position,earthModel:str=_DEFAULT_MODEL):
+        """Create a gravity object based on dragonFly.geography.Position Object
+
+        Args:
+            pos (Position)              : Position object
+            earthModel (str, optional)  : name of the Earth model. Defaults to _DEFAULT_MODEL.
+
+        Returns:
+            gravity: gravity instance
+        """
+        return Gravity(pos.x,pos.y, pos.z,earthModel)
     
     @classmethod
-    def fromPosition(cls,pos:Position):
-        pass
+    def fromLLA(cls,latitude:float,longitude:float,altitude:float,earthModel:str=_DEFAULT_MODEL):
+        """Create a gravity object based on Latitude Longitude and altitude information
 
-    @staticmethod
-    def __calculateGravity(x_ECEF:float,y_ECEF:float,z_ECEF:float):
-        pass
+        Args:
+            latitude (float): latitude in radians
+            longitude (float): longitude in radians
+            altitude (float): altitude in meters 
+            earthModel (str, optional): name of the Earth model. Defaults to _DEFAULT_MODEL.
 
+        Returns:
+            gravity: gravity instance
+        """
+        return Gravity.fromPosition(Position.fromLLA(latitude,longitude,altitude),earthModel)
 
+    def toList(self):
+        """Provide gravity vector as a Python list in ECEF frame
 
+        Returns:
+            list : list [3 elements] of the ECEF coordinates of the gravity vector
+        """
+        return self.__calculateGravity()
 
+    def toNumpy(self):
+        """Provide gravity vector as a numpy vector in ECEF frame
 
+        Returns:
+            np.ndarray : column vector [3x1] of the ECEF coordinates of the gravity vector
+        """
+        return np.reshape(np.array(self.__calculateGravity()),(3,-1))
+    
+    def __calculateGravity(self):
+        """PRIVATE FUNCTION -  calculate the gravity vector based on ECEF coordinates and ellipsoid model
+        """
 
+        #get gravitation parameter
+        earth = EarthModel(self.__model)
 
-def gravite(Position)
+        position=self.__positionECEF
+        
+        # get constant
+        a  = earth.a
+        mu = earth.mu
+        J2 = earth.j2
+
+        # get norm of ECEF coordinate
+        r = position.norm
+
+        gx =-mu/r**2*(1+3/2*J2*(a/r)**2*(1-5*(position.z/r)**2))*position.x/r
+        gy =-mu/r**2*(1+3/2*J2*(a/r)**2*(1-5*(position.z/r)**2))*position.y/r
+        gz =-mu/r**2*(1+3/2*J2*(a/r)**2*(3-5*(position.z/r)**2))*position.z/r
+
+        return [gx,gy,gz]
