@@ -9,6 +9,14 @@ import numpy as np
 
 class Gravity():
     def __init__(self,x_ECEF:float,y_ECEF:float,z_ECEF:float,earthModel:str=_DEFAULT_MODEL):
+        """create a gravity object based on ECEF coordinates
+
+        Args:
+            x_ECEF (float): x coordinate
+            y_ECEF (float): y coordinate
+            z_ECEF (float): z coordinate
+            earthModel (str, optional): name of the Ellipsoid model. Defaults to "WGS84".
+        """
         
         self.__positionECEF = Position(x_ECEF,y_ECEF,z_ECEF)
         self.__model = earthModel
