@@ -128,6 +128,11 @@ class Position:
 
         return Position(X,Y,Z)
 
+################################## PROPERTIES ##################################
+    @property
+    def norm(self):
+        return np.linalg.norm([self.x,self.y, self.z])
+
 
 ################################## EXPORTER ##################################
 

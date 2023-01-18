@@ -7,6 +7,7 @@
 from dragonfly.geography import Position
 import pytest
 import numpy as np
+import math
 
 
 ABSOLUTE_TOLERANCE  = 1e-12
@@ -170,6 +171,14 @@ def test_FromLLA():
 
         #compare ECEF
         compare_ECEF(newPos,pos["ECEF"])
+
+############################################################################################
+
+def test_norm():
+    """test r property that provides the norm of ECEF coordinates"""
+    
+    assert Position(1,-2,3).norm == pytest.approx(math.sqrt(1**2+2**2+3**2),
+                                    abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE)
 
 
 
