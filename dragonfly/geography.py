@@ -52,7 +52,12 @@ class Position:
              raise ValueError(f'"{name}" shall be a number') from None
 
     def __repr__(self):
+        """internal method for the print"""
         return f"ECEF Coordinates:\nx : {self.x}\ny : {self.y}\nz : {self.z}"
+    
+    def __eq__(self, __o: object) -> bool:
+        """internal method for equality"""
+        return (self.x, self.y, self.z) == (__o.x, __o.y,__o.z)
 
 ################################## IMPORTER ##################################
     @classmethod

@@ -186,6 +186,20 @@ def test_toNumpy():
     np.testing.assert_allclose(Position(1,2,3).toNumpy(),np.reshape(np.array([1,2,3]),(3,-1)),
                             rtol=RELATIVE_TOLERANCE,atol=ABSOLUTE_TOLERANCE)
 
+####################################  OPERATION  ####################################
+
+def test_equality():
+
+    chk = Position.fromLLA(np.deg2rad(45),np.deg2rad(-45),0)==Position.fromLLA(np.deg2rad(45),np.deg2rad(-45),0)
+
+    assert chk == True
+
+    chk = Position.fromLLA(np.deg2rad(45),np.deg2rad(-44),0)==Position.fromLLA(np.deg2rad(45),np.deg2rad(-45),0)
+
+    assert chk == False
+
+
+
 
 ####################################  UTILS  ##############################################
 
