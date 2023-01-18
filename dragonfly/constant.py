@@ -29,7 +29,12 @@ class EarthModel():
 
     @model.setter
     def model(self, value):
-        if value.upper() in _ELLIPSOID:
+        try:
+            value = value.upper()
+        except:
+            raise TypeError(f"the model value {value} is not an appropriate string")
+        
+        if value in _ELLIPSOID:
             self._model=value.upper()
         else:
             raise ValueError(f"the model {value.upper()} is not in the list of available ellipsoid models (ie. {_ELLIPSOID})")
