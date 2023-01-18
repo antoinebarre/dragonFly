@@ -57,7 +57,16 @@ class Position:
     
     def __eq__(self, __o: object) -> bool:
         """internal method for equality"""
-        return (self.x, self.y, self.z) == (__o.x, __o.y,__o.z)
+        if isinstance(__o, Position):
+            return (self.x, self.y, self.z) == (__o.x, __o.y,__o.z)
+        raise NotImplementedError(f"Class Position equality with this data type [{type(__o)} is not implemented]")
+
+
+    def __sub__(self, __o: object) -> bool:
+        """internal method for equality"""
+        if isinstance(__o, Position):
+            return Position(self.x-__o.x,self.y-__o.y, self.z-__o.z)
+        raise NotImplementedError(f"Class Position equality with this data type [{type(__o)} is not implemented]")
 
 ################################## IMPORTER ##################################
     @classmethod

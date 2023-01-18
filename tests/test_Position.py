@@ -198,6 +198,15 @@ def test_equality():
 
     assert chk == False
 
+def test_sub():
+    pos1 = Position(1,2,3)
+    pos2 = Position(1,1,1)
+
+    delta = pos1-pos2
+
+    np.testing.assert_allclose(delta.toNumpy(),np.reshape(np.array([0,1,2]),(3,-1)),
+                            rtol=RELATIVE_TOLERANCE,atol=ABSOLUTE_TOLERANCE)
+
 
 
 
