@@ -136,6 +136,14 @@ class Position:
 
 ################################## EXPORTER ##################################
 
+    def toNumpy(self):
+        """Provide Postion ECEF vector as a numpy vector
+
+        Returns:
+            np.ndarray : column vector [3x1] of the ECEF coordinates
+        """
+        return np.reshape(np.array([self.x,self.y,self.z]),(3,-1))
+
     def toLLA(self,ellipsoid:str = "WGS84"):
         """return the geographic position (i.e. latitude, longitude and altitude) against an Ellipsoid model (by default WGS84)
 

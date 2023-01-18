@@ -181,6 +181,11 @@ def test_norm():
                                     abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE)
 
 
+def test_toNumpy():
+
+    np.testing.assert_allclose(Position(1,2,3).toNumpy(),np.reshape(np.array([1,2,3]),(3,-1)),
+                            rtol=RELATIVE_TOLERANCE,atol=ABSOLUTE_TOLERANCE)
+
 
 ####################################  UTILS  ##############################################
 
