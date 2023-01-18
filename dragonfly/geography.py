@@ -10,7 +10,7 @@ LIST OF CLASSES:
 import datetime
 import numpy as np
 import math
-from  .constant import EarthModel
+from  .constant import EarthModel,_DEFAULT_MODEL
 from  .utils import assertInstance
 from .utils import rotx, roty, rotz
 
@@ -51,6 +51,9 @@ class Position:
         except ValueError:
              raise ValueError(f'"{name}" shall be a number') from None
 
+    def __repr__(self):
+        return f"ECEF Coordinates:\nx : {self.x}\ny : {self.y}\nz : {self.z}"
+
 ################################## IMPORTER ##################################
     @classmethod
     def fromList(cls,data:list):
@@ -88,7 +91,7 @@ class Position:
         return newObj
     
     @classmethod
-    def fromLLA(cls, lat:float,long:float,alt:float,ellipsoid:str = "WGS84"):
+    def fromLLA(cls, lat:float,long:float,alt:float,ellipsoid:str = _DEFAULT_MODEL):
         """create a position object based on geodetic position (ie. latitude, longitude, altitude)
 
         Args:
@@ -144,7 +147,7 @@ class Position:
         """
         return np.reshape(np.array([self.x,self.y,self.z]),(3,-1))
 
-    def toLLA(self,ellipsoid:str = "WGS84"):
+    def toLLA(self,ellipsoid:str = _DEFAULT_MODEL):
         """return the geographic position (i.e. latitude, longitude and altitude) against an Ellipsoid model (by default WGS84)
 
         Args:
