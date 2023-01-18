@@ -131,6 +131,11 @@ def test_fromList_1D():
     # assess bad size
     with pytest.raises(ValueError):
         Position.fromList([1,2,3,4])
+    
+    #bad type
+    with pytest.raises(TypeError):
+        Position.fromList("a")
+
 
 
 
@@ -188,6 +193,12 @@ def test_toNumpy():
 
 ####################################  OPERATION  ####################################
 
+def test_repr():
+    #assert repr feature
+
+    assert repr(Position(0,0,0)) == 'ECEF Coordinates:\nx : 0.0\ny : 0.0\nz : 0.0'
+
+
 def test_equality():
 
     chk = Position.fromLLA(np.deg2rad(45),np.deg2rad(-45),0)==Position.fromLLA(np.deg2rad(45),np.deg2rad(-45),0)
@@ -198,6 +209,11 @@ def test_equality():
 
     assert chk == False
 
+    # check mutation raised error
+    with pytest.raises(NotImplementedError):
+        Position(0,0,0)==1
+
+
 def test_sub():
     pos1 = Position(1,2,3)
     pos2 = Position(1,1,1)
@@ -206,7 +222,10 @@ def test_sub():
 
     np.testing.assert_allclose(delta.toNumpy(),np.reshape(np.array([0,1,2]),(3,-1)),
                             rtol=RELATIVE_TOLERANCE,atol=ABSOLUTE_TOLERANCE)
-
+            
+    # check mutation raised error
+    with pytest.raises(NotImplementedError):
+        Position(0,0,0)-1
 
 
 

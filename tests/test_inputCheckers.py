@@ -1,6 +1,6 @@
 """ UNIT TESTS FOR INPUT CHECKERS"""
 
-from dragonfly.utils import __input_check_3x1, __input_check_3x3
+from dragonfly.utils import __input_check_3x1, __input_check_3x3, _assertInstance
 
 import pytest
 import numpy as np
@@ -8,6 +8,16 @@ import numpy as np
 ABSOLUTE_TOLERANCE = 1e-16
 RELATIVE_TOLERANCE = 1e-8
 
+def test_assertInstance():
+    "assert beahvior of assertInstance"
+    with pytest.raises(TypeError):
+        _assertInstance("tata","toto",float)
+
+    try:
+        _assertInstance("tata","toto",str)
+        _assertInstance("tata",1.0,(float,int))
+    except Exception as exc:
+        assert False, f"bad assessment of assertInstance"
 
 def test_input_check_3x1():
     # wrong data type

@@ -10,13 +10,13 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 
-def assertInstance(data_name:str,data:str,expected_Instance:str)->None:
+def _assertInstance(data_name:str,data,expected_Instance)->None:
     """PRIVATE TOOLS - used to standardize the error message for Instance assessment in dragonFly
 
     Args:
-        data_name (str): _description_
-        data (str): _description_
-        expected_Instance (str): _description_
+        data_name (str): name of the data
+        data (str): value to assess
+        expected_Instance (str): expected data type
     """
 
     if not isinstance(data,expected_Instance):

@@ -56,4 +56,19 @@ def test_EarthModel():
         msg = f'Inapropriate excentricity value for {model["name"]}'
         assert model2test.e== pytest.approx(model["e"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
 
-        
+
+def test_EarthModel_error():
+    """ assess all possible error of the Earth model"""
+
+    # bad type
+    with pytest.raises(TypeError):
+        e = EarthModel(0)
+    
+    with pytest.raises(ValueError):
+        e = EarthModel("toto")
+
+    with pytest.raises(TypeError):
+        e = EarthModel()
+        e.model =0
+
+

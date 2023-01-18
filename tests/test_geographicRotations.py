@@ -94,39 +94,39 @@ class TestECEF2ENU():
         np.testing.assert_allclose(dcm_ecef2enu(lat, lon), R_pred, atol=1e-6)  # Python test
         np.testing.assert_allclose(dcm_ecef2enu(lat, lon) @ test_vec, test_rot_vec, atol=1e-6) # checking rotations
    
-class test_angle2dcm():    
-    def test_angle2dcm_ZYX(self):
-        """unit test for angle to dcm with ZYX order
-
-        Data Source: Example 1 generated using book GNSS Applications and Methods
-                Chapter 7 library function: eul2Cbn.m (transpose of this used).
-                Example 2 found in Performance, Stability, Dynamics, and Control
-                of Airplanes, Second Edition (p. 355).
-
-        """
-        # Define Euler angles and expected DCMs
-        checks = (
-            (np.deg2rad([-83, 2.3, 13]), 6,
-                np.array([[ 0.121771, -0.991747, -0.040132],
-                        [ 0.968207,  0.109785,  0.224770],
-                        [-0.218509, -0.066226,  0.973585]])),
-            (np.deg2rad([-10, 20, 30]), 4,
-                np.array([[ 0.9254,  0.3188,  0.2049],
-                        [-0.1632,  0.8232, -0.5438],
-                        [-0.3420,  0.4698,  0.8138]]).T),
-        )
-
-        for angles, decimal, Rnav2body_expected in checks:
-            yaw, pitch, roll = angles
-
-            Rnav2body_computed = angle2dcm(yaw, pitch, roll)
-            
-            np.testing.assert_almost_equal(Rnav2body_expected, Rnav2body_computed, decimal=decimal)
     
-    def test_angle2dcm_error(self):
-        "test only ZYX feature is implemented"
-        with pytest.raises(NotImplementedError):
-            print(angle2dcm(0,0,0,"XYZ"))
+def test_angle2dcm_ZYX():
+    """unit test for angle to dcm with ZYX order
+
+    Data Source: Example 1 generated using book GNSS Applications and Methods
+            Chapter 7 library function: eul2Cbn.m (transpose of this used).
+            Example 2 found in Performance, Stability, Dynamics, and Control
+            of Airplanes, Second Edition (p. 355).
+
+    """
+    # Define Euler angles and expected DCMs
+    checks = (
+        (np.deg2rad([-83, 2.3, 13]), 6,
+            np.array([[ 0.121771, -0.991747, -0.040132],
+                    [ 0.968207,  0.109785,  0.224770],
+                    [-0.218509, -0.066226,  0.973585]])),
+        (np.deg2rad([-10, 20, 30]), 4,
+            np.array([[ 0.9254,  0.3188,  0.2049],
+                    [-0.1632,  0.8232, -0.5438],
+                    [-0.3420,  0.4698,  0.8138]]).T),
+    )
+
+    for angles, decimal, Rnav2body_expected in checks:
+        yaw, pitch, roll = angles
+
+        Rnav2body_computed = angle2dcm(yaw, pitch, roll)
+        
+        np.testing.assert_almost_equal(Rnav2body_expected, Rnav2body_computed, decimal=decimal)
+
+def test_angle2dcm_errorImplemented():
+    "test only ZYX feature is implemented"
+    with pytest.raises(NotImplementedError):
+        print(angle2dcm(0,0,0,"XYZ"))
             
 def test_dcm2angle_ZYX():
     """test dcm2angle with ZYX rotation

@@ -22,7 +22,14 @@ class EarthModel():
     mu = 3.986004418E14 #m-3s-2
    
     def __init__(self,model=_DEFAULT_MODEL) -> None:
-        self.model = model.upper()
+        try:
+            model = model.upper()
+        except:
+            raise TypeError(f"the model value {model} is not an appropriate string")
+
+        self.model = model
+
+
     @property
     def model(self):
         return self._model
