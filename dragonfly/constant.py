@@ -26,10 +26,9 @@ class EarthModel():
     def __init__(self, model=_DEFAULT_MODEL) -> None:
         try:
             model = model.upper()
-        except Exception as e:
-            e.add_note(f"the model value {model} is not an appropriate string")
-            raise
-
+        except Exception:
+            msg = f"the model value {model} is not an appropriate string"
+            raise AttributeError(msg)
         self.model = model
 
     @property
@@ -40,8 +39,9 @@ class EarthModel():
     def model(self, value):
         try:
             value = value.upper()
-        except Exception as e:
-            e.add_note(f"the model value {value} is not an appropriate string")
+        except Exception:
+            msg = f"the model value {value} is not an appropriate string"
+            raise AttributeError(msg)
 
         if value in _ELLIPSOID:
             self._model = value.upper()
@@ -50,7 +50,7 @@ class EarthModel():
                    " is not in the list of available ellipsoid models"
                    "(ie. {_ELLIPSOID})"
                    )
-            raise ValueError(msg)
+            raise AttributeError(msg)
 
     @property
     def a(self):
