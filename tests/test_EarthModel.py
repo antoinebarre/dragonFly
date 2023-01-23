@@ -71,5 +71,3 @@ def test_EarthModel_error():
     with pytest.raises(AttributeError):
         e = EarthModel()
         e.model = 0
-
-
