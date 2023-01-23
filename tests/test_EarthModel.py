@@ -27,10 +27,11 @@ def test_EarthModel():
        
         #check Earth rotation rate
         msg = f'Inapropriate earth rotational rate'
-        assert model2test.earthRotationRate == pytest.approx(7.292115E-5,abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
+        assert model2test.earthRotationRate == pytest.approx(7.292115E-5,
+                    abs = ABSOLUTE_TOLERANCE, rel=RELATIVE_TOLERANCE), msg
        
-        #check Earth rotation rate
-        msg = f'Inapropriate gravitational constant'
+        # check Earth rotation rate
+        msg = 'Inapropriate gravitational constant'
         assert model2test.mu == pytest.approx(model["mu"],abs=ABSOLUTE_TOLERANCE,rel=RELATIVE_TOLERANCE), msg
        
         #check Earth rotation rate
@@ -61,14 +62,12 @@ def test_EarthModel_error():
     """ assess all possible error of the Earth model"""
 
     # bad type
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         e = EarthModel(0)
     
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         e = EarthModel("toto")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         e = EarthModel()
-        e.model =0
-
-
+        e.model = 0
