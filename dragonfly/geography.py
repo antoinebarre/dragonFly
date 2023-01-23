@@ -125,7 +125,7 @@ class Position:
             lat (float): latitude in radians
             long (float): longitude in radians
             alt (float): altitude in meters
-            ellipsoid (str, optional): Model of 
+            ellipsoid (str, optional): Model of
                 Earth Ellipsoid. Defaults to "WGS84".
 
         Returns:
@@ -185,7 +185,7 @@ class Position:
             float : longitude in radians
             float : altitude in radians
         """
-        
+
         # create EarthModel
         earth = EarthModel(ellipsoid)
 
@@ -203,7 +203,7 @@ class Position:
         # Distance from Z-axis
         D = math.hypot(self.x, self.y)
 
-        # Bowring's formula for initial parametric 
+        # Bowring's formula for initial parametric
         # (beta) and geodetic (phi) latitudes
         beta = math.atan2(self.z, (1 - f) * D)
         phi = math.atan2(self.z + b * ep2 * math.sin(beta)**3,
@@ -233,8 +233,9 @@ class Position:
         # voir https://github.com/kvenkman/ecef2lla/blob/master/ecef2lla.py
         return latitude, longitude, altitude
 
+
 """
-###########€€€€€€€€€€€€€€ ROTATION MATRIX ###########€€€€€€€€€€€€€€
+-------------------- ROTATION MATRIX --------------------
 """
 
 
@@ -242,10 +243,9 @@ def DCM_ECI2ECEF(dt: float) -> np.ndarray:
     """Provide the Direct Cosine Matrix to convert Earth-centered inertial
      (ECI) to Earth-centered Earth-fixed (ECEF) coordinates
 
-    The Earth-centered inertial (ECI) system is non-rotating. For most applications, assume this frame to be inertial, although the equinox and equatorial plane move very slightly over time. The ECI system is considered to be truly inertial for high-precision orbit calculations when the equator and equinox are defined at a particular epoch (e.g. J2000). Aerospace functions and blocks that use a particular realization of the ECI coordinate system provide that information in their documentation. The ECI system origin is fixed at the center of the Earth (see figure).
-
     - The x-axis points towards the vernal equinox (First Point of Aries ♈).
-    - The y-axis points 90 degrees to the east of the x-axis in the equatorial plane.
+    - The y-axis points 90 degrees to the east of the x-axis in the equatorial
+        plane.
     - The z-axis points northward along the Earth rotation axis.
 
     Args:
@@ -253,16 +253,19 @@ def DCM_ECI2ECEF(dt: float) -> np.ndarray:
         Inertial (ECI) frame. This value shall be positive (>=0)
 
     Returns:
-        np.ndarray: rotational matrix [3x3] to transform a vector in ECI in the ECEF frame
+        np.ndarray: rotational matrix [3x3] to transform a vector in ECI in
+        the ECEF frame
     """
 
     # voir https://github.com/NavPy/NavPy/blob/master/navpy/core/navpy.py
 
-    return rotz(EarthModel.earthRotationRate*dt)
+    return rotz(EarthModel.earthRotationRate * dt)
 
-def dcm_ecef2ned(latitude:float,longitude:float)-> np.ndarray:
-    """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
-    NED (North Earth Down) to transform a vector defined in ECEF to NED frame
+
+def dcm_ecef2ned(latitude: float, longitude: float) -> np.ndarray:
+    """Calculate the rotational matrix from the ECEF (Earth Centered Earth
+    Fixed) to NED (North Earth Down) to transform a vector defined in ECEF
+    to NED frame
 
     Args:
         latitude (float): latitude of the geographical point in radians
@@ -272,83 +275,102 @@ def dcm_ecef2ned(latitude:float,longitude:float)-> np.ndarray:
         np.ndarray: Direct Cosinus Matrix from ECEF to NED
     """
 
-    M = np.matmul(roty(-(latitude+np.pi/2)),rotz(longitude))
-       
+    M = np.matmul(roty(-(latitude + np.pi / 2)), rotz(longitude))
+
     return M
 
 
-def dcm_ecef2enu(latitude:float,longitude:float)-> np.ndarray:
-    """Calculate the rotational matrix from the ECEF (Earth Centered Earth Fixed) to 
-    ENU (East North Up) to transform a vector defined in ECEF to ENU frame
+def dcm_ecef2enu(latitude: float, longitude: float) -> np.ndarray:
+    """Calculate the rotational matrix from the ECEF (Earth Centered Earth
+     Fixed) to ENU (East North Up) to transform a vector defined in ECEF to
+     ENU frame
 
     Args:
         latitude (float): latitude of the geographical point in radians
         longitude (float): longitude of the geographical point in radians
 
-    Reference: 
+    Reference:
         https://gssc.esa.int/navipedia/index.php/Transformations_between_ECEF_and_ENU_coordinates
 
     Returns:
         np.ndarray: Direct Cosinus Matrix from ECEF to ENU
     """
 
-    return rotx(np.pi/2)@rotz(np.pi/2)@roty(-latitude)@rotz(longitude)#np.matmul(roty(-latitude+np.pi/2),rotz(np.pi/2+longitude))
+    return (
+        rotx(np.pi / 2) @ rotz(np.pi / 2) @ roty(-latitude) @ rotz(longitude)
+    )  # np.matmul(roty(-latitude+np.pi/2),rotz(np.pi/2+longitude))
 
-def angle2dcm(rotAngle1:float,rotAngle2:float,rotAngle3:float, rotationSequence:str='ZYX')->np.ndarray:
+
+def angle2dcm(rotAngle1: float, rotAngle2: float,
+              rotAngle3: float, rotationSequence: str = 'ZYX') -> np.ndarray:
     """This function converts Euler Angle into Direction Cosine Matrix (DCM).
-        The DCM is described by three sucessive rotation rotAngle1, rotAngle2, and rotAngle3 about the axes described by the rotation_sequence.
-        The default rotation_sequence='ZYX' is the aerospace sequence and rotAngle1 is the yaw angle, rotAngle2 is the pitch angle, and rotAngle3 is the roll angle. In this case DCM transforms a vector from the locally level coordinate frame (i.e. the NED frame) to the body frame.
-
     Args:
-        rotAngle1 (float): first angle of roation in radians (e.g. yaw for 'ZYX')
-        rotAngle2 (float): second angle of roation in radians (e.g. pitch for 'ZYX')
-        rotAngle3 (float): third angle of roation in radians (e.g. roll for 'ZYX')
-        rotationSequence (str, optional): sequence of rotations. Defaults to 'ZYX'.
+        rotAngle1 (float): first angle of roation in radians
+            (e.g. yaw for 'ZYX')
+        rotAngle2 (float): second angle of roation in radians
+            (e.g. pitch for 'ZYX')
+        rotAngle3 (float): third angle of roation in radians
+            (e.g. roll for 'ZYX')
+        rotationSequence (str, optional): sequence of rotations.
+            Defaults to 'ZYX'.
 
     Returns:
         np.ndarray: direction cosine matrix associated to the rotation angles
     """
 
-    if rotationSequence.upper()=="ZYX":
+    if rotationSequence.upper() == "ZYX":
         return rotx(rotAngle3)@roty(rotAngle2)@rotz(rotAngle1)
     else:
-        msg =f"Rotation sequence {rotationSequence.upper()} is not implemented."
+        msg = (f"Rotation sequence {rotationSequence.upper()}"
+               " is not implemented.")
         raise NotImplementedError(msg)
 
-def dcm2angle(dcm:np.ndarray, rotationSequence:str='ZYX')->tuple[float,float,float]:
-    """This function converts a Direction Cosine Matrix (DCM) into the three rotation angles.
-    The DCM is described by three sucessive rotation rotAngle1, rotAngle2, and rotAngle3 about the axes described by the rotation_sequence.
-    The default rotation_sequence='ZYX' is the aerospace sequence and rotAngle1 is the yaw angle, rotAngle2 is the pitch angle, and rotAngle3 is the roll angle. In this case DCM transforms a vector from the locally level coordinate frame (i.e. the NED frame) to the body frame.
+
+def dcm2angle(dcm: np.ndarray,
+              rotationSequence: str = 'ZYX') -> tuple[float, float, float]:
+    """This function converts a Direction Cosine Matrix (DCM) into the three
+    rotation angles.
 
     Notes:
     The returned rotAngle1 and 3 will be between   +/- 180 deg (+/- pi rad).
-    In contrast, rotAngle2 will be in the interval +/- 90 deg (+/- pi/2 rad). In the 'ZYX' or '321' aerospace sequence, that means the pitch angle returned will always be inside the closed interval +/- 90 deg (+/- pi/2 rad).
-    Applications where pitch angles near or larger than 90 degrees in magnitude are expected should used alternate attitude parameterizations like quaternions.
+    In contrast, rotAngle2 will be in the interval +/- 90 deg (+/- pi/2 rad).
+    In the 'ZYX' or '321' aerospace sequence, that means the pitch angle
+    returned will always be inside the closed interval +/- 90 deg
+    (+/- pi/2 rad).
+    Applications where pitch angles near or larger than 90 degrees
+    in magnitude are expected should used alternate attitude parameterizations
+    like quaternions.
 
     Args:
-        dcm (np.ndarray): direction cosine matrix associated to the rotation angles
-        rotationSequence (str, optional): sequence of rotations. Defaults to 'ZYX'.
+        dcm (np.ndarray): direction cosine matrix associated
+            to the rotation angles
+        rotationSequence (str, optional): sequence of rotations.
+            Defaults to 'ZYX'.
 
     Returns:
-        rotAngle1 (float): first angle of roation in radians (e.g. yaw for 'ZYX')
-        rotAngle2 (float): second angle of roation in radians (e.g. pitch for 'ZYX')
-        rotAngle3 (float): third angle of roation in radians (e.g. roll for 'ZYX')
+        rotAngle1 (float): first angle of roation in radians
+            (e.g. yaw for 'ZYX')
+        rotAngle2 (float): second angle of roation in radians
+            (e.g. pitch for 'ZYX')
+        rotAngle3 (float): third angle of roation in radians
+            (e.g. roll for 'ZYX')
     """
 
-
-    if rotationSequence.upper()=="ZYX":
+    if rotationSequence.upper() == "ZYX":
         rotAngle1 = np.arctan2(dcm[0, 1], dcm[0, 0])   # Yaw
         rotAngle2 = -np.arcsin(dcm[0, 2])  # Pitch
         rotAngle3 = np.arctan2(dcm[1, 2], dcm[2, 2])  # Roll
 
-        return rotAngle1,rotAngle2,rotAngle3
+        return rotAngle1, rotAngle2, rotAngle3
     else:
-        msg =f"Rotation sequence {rotationSequence.upper()} is not implemented."
+        msg = (f"Rotation sequence {rotationSequence.upper()}"
+               " is not implemented.")
         raise NotImplementedError(msg)
 
 
-def getRange(lat1:float,long1:float,lat2:float,long2:float,
-                earth_model:str=_DEFAULT_MODEL,nbIter:int=200)->float:
+def getRange(lat1: float, long1: float, lat2: float, long2: float,
+             earth_model: str = _DEFAULT_MODEL,
+             nbIter: int = 200) -> float:
     """Calculate the distance between two points on the surface of a spheroid
 
     Args:
@@ -362,14 +384,16 @@ def getRange(lat1:float,long1:float,lat2:float,long2:float,
         float: distance in meters
     """
 
-    #latitue assertion
-    assert abs(lat1)<=np.pi/2 and abs(lat2)<=np.pi/2 , f"Latitudes Value shall be lower than 90 (lat1: {np.rad2deg(lat1)} , lat2: {np.rad2deg(lat2)})"
+    # latitue assertion
+    msg = ("Latitudes Value shall be lower than 90"
+           f" (lat1: {np.rad2deg(lat1)} , lat2: {np.rad2deg(lat2)})")
 
-        
+    assert abs(lat1) <= np.pi/2 and abs(lat2) <= np.pi/2, msg
+
     # short-circuit coincident points
     if lat1 == lat2 and long1 == long2:
         return 0.0
-    
+
     # load earth model
     earth = EarthModel(earth_model)
     a = earth.a
@@ -381,10 +405,10 @@ def getRange(lat1:float,long1:float,lat2:float,long2:float,
 
     # correct for errors at exact poles by adjusting 0.6 millimeters:
     if np.absolute(np.pi/2-np.absolute(lat1)) < 1e-10:
-            lat1 = math.copysign(np.pi/2-(1e-10),lat1)
-    
+        lat1 = math.copysign(np.pi/2-(1e-10), lat1)
+
     if np.absolute(np.pi/2-np.absolute(lat2)) < 1e-10:
-            lat2 = math.copysign(np.pi/2-(1e-10),lat2)
+        lat2 = math.copysign(np.pi/2-(1e-10), lat2)
 
     U1 = np.arctan((1 - f) * np.tan(lat1))
     U2 = np.arctan((1 - f) * np.tan(lat2))
@@ -424,9 +448,9 @@ def getRange(lat1:float,long1:float,lat2:float,long2:float,
     uSq = cosSqAlpha * (a ** 2 - b ** 2) / (b ** 2)
     A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)))
     B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)))
-    deltaSigma = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma *
-                 (-1 + 2 * cos2SigmaM ** 2) - B / 6 * cos2SigmaM *
-                 (-3 + 4 * sinSigma ** 2) * (-3 + 4 * cos2SigmaM ** 2)))
+    deltaSigma = (B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma *
+                  (-1 + 2 * cos2SigmaM ** 2) - B / 6 * cos2SigmaM *
+                  (-3 + 4 * sinSigma ** 2) * (-3 + 4 * cos2SigmaM ** 2))))
     s = b * A * (sigma - deltaSigma)
 
     return round(s, 4)
