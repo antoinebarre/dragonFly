@@ -22,7 +22,7 @@ import radon.raw
 ComplexityMetrics = namedtuple("CodeMetrics",
                                ["name", "complexity",
                                 "complexityLetter", "is_method",
-                                "class_name"])
+                                "class_name", "startLine"])
 
 LineMetric = namedtuple("LineMetric",
                         ["nbLines", "nbLineSource",
@@ -33,6 +33,11 @@ LineMetric = namedtuple("LineMetric",
 
 
 class FileAnalysis(ImmutableClass):
+
+    MAX_COMPLEXITY_LETTER = "A"
+    MAX_MAINTENACE_LETTER = "A"
+    MIN_COMMENT_RATION = 30  # percentage
+    _LIST_LETTERS = ["A", "B", "C", "D", "E"]
 
     def __init__(self, filePath: str) -> None:
         """Create a FileAnalysis object based on a filePath
@@ -52,6 +57,27 @@ class FileAnalysis(ImmutableClass):
             raise ValueError(msg)
         self.filePath = os.path.abspath(filePath)
 
+    def __str__(self) -> str:
+        """Overload the print method"""
+
+        CI = self.complexity
+
+        complexitymsg = [(f"\t\t - {item.name}: {item.complexityLetter}"
+                          f" ({item.complexity})"
+                          f" (class: {item.class_name})\n")
+                         for item in CI]
+        complexitymsg = "".join(complexitymsg)
+
+        msg = (
+            f"Code Metrics for {self.fileName}:\n"
+            f"\t- Path: {self.fileFolder}\n"
+            f"\t- Maintenability: {self.maintenanceLetter} ({self.maintenanceIndex})\n"  # noqa: E501
+            f"\t- Comment Percentage: {self.commentsPercentage} %\n"
+            f"\t- Complexity:\n"
+        )
+
+        return msg+complexitymsg
+
     @property
     def complexity(self) -> List[namedtuple]:
 
@@ -66,18 +92,30 @@ class FileAnalysis(ImmutableClass):
         result = []
 
         # function
-        result.append(_collectInfo(evaluation.functions, self.filePath))
+        result.extend(_collectInfo(evaluation.functions, self.filePath))
 
         # Class
         list_classes = evaluation.classes
         for classItem in list_classes:
-            result.append(_collectInfo(classItem.methods, self.filePath))
+            result.extend(_collectInfo(classItem.methods, self.filePath))
 
         # clean result of empty lists
         while [] in result:
             result.remove([])
 
         return result
+
+    @property
+    def fileName(self) -> str:
+        """File name with its extension"""
+        dir, fileName = os.path.split(self.filePath)
+        return fileName
+
+    @property
+    def fileFolder(self):
+        """path of the folder of the analyzed file"""
+        dir, file = os.path.split(self.filePath)
+        return dir
 
     @property
     def numberOfClasses(self):
@@ -168,6 +206,66 @@ class FileAnalysis(ImmutableClass):
             data = file.read()
         return data
 
+    def isValid(self,
+                max_complexityLetter: str = MAX_COMPLEXITY_LETTER,
+                max_maintenanceLetter: str = MAX_MAINTENACE_LETTER,
+                min_commentPercentage: float = MIN_COMMENT_RATION) -> bool:
+        """Check if a file is ok against code metrics
+
+        Args:
+            max_complexityLetter (str, optional): maximum complexity letter.
+                Defaults to MAX_COMPLEXITY_LETTER ("A").
+            max_maintenanceLetter (str, optional): maximum maintenance letter.
+                Defaults to MAX_MAINTENACE_LETTER ("A").
+            min_commentPercentage (float, optional): minimum ration of comment
+                Defaults to MIN_COMMENT_RATION (30%).
+
+        Returns:
+            bool: code metrics assessment as boolean
+        """
+
+        # I/O MANAGEMENT
+
+        assert isinstance(max_maintenanceLetter, str), "max_maintenanceLetter shall be a string"  # noqa: E501
+        assert max_maintenanceLetter in self._LIST_LETTERS, f"Letter shall be part of {self._LIST_LETTERS}"  # noqa: E501
+
+        assert isinstance(min_commentPercentage, (int, float)), "min_commentPercentage shall be a numeric"  # noqa: E501
+        assert min_commentPercentage >= 0 and min_commentPercentage <= 100
+
+        # Evaluate code metrics
+        chk_maintenance = self.maintenanceLetter <= max_maintenanceLetter
+        chk_commentPercentage = (self.commentsPercentage >=
+                                 min_commentPercentage)
+        chk_complexity = self.getInvalidItem(max_complexityLetter=max_complexityLetter) == []  # noqa: E501
+
+        return chk_maintenance and chk_commentPercentage and chk_complexity
+
+    def getInvalidItem(self,
+                       max_complexityLetter: str = MAX_COMPLEXITY_LETTER) -> List[namedtuple]:  # noqa: E501
+        """Provide the list of functions or methods with inappropriate
+        complexity
+
+        Args:
+            max_complexityLetter (str, optional): maximum complexity letter
+                Defaults to MAX_COMPLEXITY_LETTER ("A").
+
+        Returns:
+            List: List of namedtuple of the function with inappropriate
+            complexity
+        """
+
+        # IO MANAGEMENT
+        assert isinstance(max_complexityLetter, str), "max_maintenanceLetter shall be a string"  # noqa: E501
+        assert max_complexityLetter in self._LIST_LETTERS, f"Letter shall be part of {self._LIST_LETTERS}"  # noqa: E501
+
+        # calculate complexity index
+        CI = self.complexity
+
+        invalidElement = [item for item in CI
+                          if item.complexityLetter > max_complexityLetter]
+        return invalidElement
+
+
 # FOLDER ANALYSIS
 
 
@@ -239,5 +337,6 @@ def _collectInfo(items, pythonFile):
                     complexity=item.complexity,
                     complexityLetter=radon.complexity.cc_rank(item.complexity),
                     is_method=item.is_method,
-                    class_name=item.classname))
+                    class_name=item.classname,
+                    startLine=item.lineno))
     return info
