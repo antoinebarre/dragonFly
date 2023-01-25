@@ -124,7 +124,7 @@ class ImmutableClass:
     '''Freeze any class such that instantiated
     objects become immutable. Also use __slots__ for speed.
 
-    see: https://medium.datadriveninvestor.com/immutability-in-python-d57a3b23f336
+    see: https://medium.datadriveninvestor.com/immutability-in-python-d57a3b23f336 # noqa: E501
 
     '''
     __slots__ = []
