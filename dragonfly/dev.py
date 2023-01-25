@@ -17,6 +17,8 @@ import radon.complexity
 import radon.metrics
 import radon.raw
 
+from prettytable import PrettyTable
+
 # NAMED TUPLE DEFINITION
 
 ComplexityMetrics = namedtuple("CodeMetrics",
@@ -28,6 +30,12 @@ LineMetric = namedtuple("LineMetric",
                         ["nbLines", "nbLineSource",
                          "nbBlankLine", "nbCommentLines",
                          "nbMultiCommentLines"])
+
+FolderResult = namedtuple("FolderResult",
+                          ["filePath", "nbLines",
+                           "commentPercentage", "maintenanceLetter",
+                           "complexity_Violations_nb", "complexity",
+                           "complexity_Violations"])
 
 # CLASS MODULE ANALYSIS
 
@@ -62,11 +70,13 @@ class FileAnalysis(ImmutableClass):
 
         CI = self.complexity
 
-        complexitymsg = [(f"\t\t - {item.name}: {item.complexityLetter}"
-                          f" ({item.complexity})"
-                          f" (class: {item.class_name})\n")
-                         for item in CI]
-        complexitymsg = "".join(complexitymsg)
+        my_table = PrettyTable()
+
+        my_table.field_names = ["Item Name", "Class",
+                                "Complexity Letter", "Line"]
+
+        for item in CI:
+            my_table.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
 
         msg = (
             f"Code Metrics for {self.fileName}:\n"
@@ -76,10 +86,11 @@ class FileAnalysis(ImmutableClass):
             f"\t- Complexity:\n"
         )
 
-        return msg+complexitymsg
+        return msg+str(my_table)
 
     @property
     def complexity(self) -> List[namedtuple]:
+        """Complexity as namedtuple with associated information"""
 
         # read file :
         data = self._readFile()
@@ -165,6 +176,8 @@ class FileAnalysis(ImmutableClass):
 
     @property
     def lineMetrics(self) -> namedtuple:
+        """Line of code metric including comment multiline
+         comment line, blanck line and source code line"""
 
         loc_metric = radon.raw.analyze(self._readFile())
 
@@ -176,6 +189,19 @@ class FileAnalysis(ImmutableClass):
             nbMultiCommentLines=loc_metric.multi,
             )
 
+    @property
+    def nbLines(self) -> int:
+        """number of lines in the file
+
+        Returns:
+            int: number of lines
+        """
+
+        # get the line metrics
+        metrics = self.lineMetrics
+
+        return metrics.nbLines
+    
     @property
     def commentsPercentage(self) -> float:
         """Provide the percentage of comments
@@ -236,12 +262,12 @@ class FileAnalysis(ImmutableClass):
         chk_maintenance = self.maintenanceLetter <= max_maintenanceLetter
         chk_commentPercentage = (self.commentsPercentage >=
                                  min_commentPercentage)
-        chk_complexity = self.getInvalidItem(max_complexityLetter=max_complexityLetter) == []  # noqa: E501
+        chk_complexity = self.getInvalidItems(max_complexityLetter=max_complexityLetter) == []  # noqa: E501
 
         return chk_maintenance and chk_commentPercentage and chk_complexity
 
-    def getInvalidItem(self,
-                       max_complexityLetter: str = MAX_COMPLEXITY_LETTER) -> List[namedtuple]:  # noqa: E501
+    def getInvalidItems(self,
+                        max_complexityLetter: str = MAX_COMPLEXITY_LETTER) -> List[namedtuple]:  # noqa: E501
         """Provide the list of functions or methods with inappropriate
         complexity
 
@@ -265,6 +291,43 @@ class FileAnalysis(ImmutableClass):
                           if item.complexityLetter > max_complexityLetter]
         return invalidElement
 
+    def getNumberInvalidItems(self,
+                              max_complexityLetter: str = MAX_COMPLEXITY_LETTER,  # noqa: E501
+                              ) -> int:
+        """Provide the number of Invalid Items
+
+        Returns:
+            int: _description_
+        """
+        return len(self.getInvalidItems(max_complexityLetter))
+
+    def getListInvalidItems(self,
+                            max_complexityLetter: str = MAX_COMPLEXITY_LETTER,
+                            ) -> List[str]:
+        """Provide the list of Invalid items (functions and Class method)
+        that violate the complexity rules
+
+        Args:
+            max_complexityLetter (str, optional): max complexity letter
+            Defaults to MAX_COMPLEXITY_LETTER.
+
+        Returns:
+            List[str]: list of Items a list of string with line number
+        """
+
+        res = []
+        for item in self.getInvalidItems(max_complexityLetter):
+            if item.is_method:
+                res.append(item.class_name +
+                           "." +
+                           item.name +
+                           f" (L{item.startLine})" +
+                           f" - {item.complexityLetter} ({item.complexity})")
+            else:
+                res.append(item.name +
+                           f" (L{item.startLine})" +
+                           f" - {item.complexityLetter} ({item.complexity})")
+        return res
 
 # FOLDER ANALYSIS
 
@@ -272,11 +335,39 @@ class FileAnalysis(ImmutableClass):
 class FolderAnalysis(ImmutableClass):
 
     def __init__(self, folderPath: str) -> None:
+        """create a Folder Analysis object
+
+        Args:
+            folderPath (str): folder path (absolute or relative)
+        """
         if not (os.path.isdir(folderPath)):
             msg = f"{folderPath} is not a valid folder path"
             raise ValueError(msg)
         self.folderPath = os.path.abspath(folderPath)
         pass
+
+    def __str__(self) -> str:
+
+        msg = (
+            "CODE METRICS ANALYSIS for "
+            f"{self.folderPath}\n"
+        )
+
+        status = self.getResults()
+
+        my_table = PrettyTable()
+
+        my_table.field_names = ["File Name", "Number of Lines", "Comment %",
+                                "Maintenance", "Complexity Violation"]
+
+        for item in status:
+            my_table.add_row([item.filePath,
+                              item.nbLines,
+                              item.commentPercentage,
+                              item.maintenanceLetter,
+                              item.complexity_Violations_nb])
+
+        return msg+str(my_table)
 
     @property
     def listFiles(self) -> List[str]:
@@ -297,6 +388,8 @@ class FolderAnalysis(ImmutableClass):
 
     @property
     def complexity(self) -> List:
+        """List of all function and method of the file with the complexity
+        information"""
 
         complexityList = []
 
@@ -306,16 +399,84 @@ class FolderAnalysis(ImmutableClass):
         return complexityList
 
     @property
-    def maintenanceLetter(self):
+    def maintenanceLetter(self) -> List:
+        """Maintenance Letter of all Python files
+
+        Returns:
+            List: list of all filePath with the maintenance Letter
+        """
         res = [[filePath, FileAnalysis(filePath).maintenanceLetter]
                for filePath in self.listFiles]
         return res
 
     @property
     def commentPercentage(self):
+        """Comment Percentage for all Python file in the directorie
+        (including subdirectories)
+        """
         res = [[filePath, FileAnalysis(filePath).commentsPercentage]
                for filePath in self.listFiles]
         return res
+
+    def getResults(self,
+                   max_complexityLetter: str = FileAnalysis.MAX_COMPLEXITY_LETTER,  # noqa: E501
+                   ) -> List:
+        """Provide the list of code metrics for all analyzed python files
+
+        Args:
+            max_complexityLetter (str, optional): Maximum Complexity leter
+             Defaults to FileAnalysis.MAX_COMPLEXITY_LETTER.('A')
+
+        Returns:
+            List: list of namedtuple
+        """
+
+        list_results = []
+
+        for filePath in self.listFiles:
+            newRes = FolderResult(filePath=os.path.relpath(filePath,
+                                                           self.folderPath),
+                                  nbLines=FileAnalysis(filePath).nbLines,
+                                  commentPercentage=FileAnalysis(filePath).commentsPercentage,  # noqa: E501
+                                  maintenanceLetter=FileAnalysis(filePath).maintenanceLetter,  # noqa: E501
+                                  complexity_Violations_nb=FileAnalysis(filePath).getNumberInvalidItems(max_complexityLetter),  # noqa: E501
+                                  complexity_Violations=FileAnalysis(filePath).getListInvalidItems(max_complexityLetter),  # noqa: E501
+                                  complexity=FileAnalysis(filePath).complexity
+                                  )
+            list_results.append(newRes)
+
+        # res = [[os.path.relpath(filePath, self.folderPath),
+        #         FileAnalysis(filePath).commentsPercentage,
+        #         FileAnalysis(filePath).maintenanceLetter,
+        #         FileAnalysis(filePath).getListInvalidItems(max_complexityLetter)  # noqa: E501
+        #         ]
+        #        for filePath in self.listFiles]
+
+        return list_results
+
+    def isValid(self,
+                max_complexityLetter: str = FileAnalysis.MAX_COMPLEXITY_LETTER,  # noqa: E501
+                max_maintenanceLetter: str = FileAnalysis.MAX_MAINTENACE_LETTER,  # noqa: E501
+                min_commentPercentage: float = FileAnalysis.MIN_COMMENT_RATION,  # noqa: E501
+                ) -> bool:
+        """Check if all Python files in the path (including subdirectories)
+        are valid against code metrics
+
+        Args:
+            max_complexityLetter (str, optional): maximum complexity letter.
+                Defaults to MAX_COMPLEXITY_LETTER ("A").
+            max_maintenanceLetter (str, optional): maximum maintenance letter.
+                Defaults to MAX_MAINTENACE_LETTER ("A").
+            min_commentPercentage (float, optional): minimum ration of comment
+                Defaults to MIN_COMMENT_RATION (30%).
+        Returns:
+            bool: boolean Ture if OK false if not valid
+        """
+
+        res = all([FileAnalysis(filePath).isValid(max_complexityLetter, max_maintenanceLetter, min_commentPercentage)   # noqa: E501
+                   for filePath in self.listFiles])
+        return res
+
 
 # -------------------- UTILS -------------------------
 
