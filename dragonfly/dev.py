@@ -19,6 +19,7 @@ import radon.raw
 
 from prettytable import PrettyTable
 
+
 # NAMED TUPLE DEFINITION
 
 ComplexityMetrics = namedtuple("CodeMetrics",
@@ -37,15 +38,69 @@ FolderResult = namedtuple("FolderResult",
                            "complexity_Violations_nb", "complexity",
                            "complexity_Violations"])
 
-# CLASS MODULE ANALYSIS
+
+# -------------------------------------------------------------------
+#                          CLASS CODE METRICS
+# -------------------------------------------------------------------
 
 
-class FileAnalysis(ImmutableClass):
+class CodeMetrics():
+    _MAX_COMPLEXITY_LETTER = "A"
+    _MAX_MAINTENANCE_LETTER = "A"
+    _MIN_COMMENT_RATIO = 30 
+    _VALID_LETTERS = ["A", "B", "C", "D", "E"]
+    _VALID_RANGE = {"min": 0, "max": 100}
 
-    MAX_COMPLEXITY_LETTER = "A"
-    MAX_MAINTENACE_LETTER = "A"
-    MIN_COMMENT_RATION = 30  # percentage
-    _LIST_LETTERS = ["A", "B", "C", "D", "E"]
+    def chk_complexity(self, value2test):
+        # Valid IO
+        CodeMetrics._verifyLetter(value2test, self._VALID_LETTERS)
+        # assess
+        return value2test <= self._MAX_COMPLEXITY_LETTER
+
+    def chk_maintenance(self, value2test):
+        # Valid IO
+        CodeMetrics._verifyLetter(value2test, self._VALID_LETTERS)
+        # assess
+        return value2test <= self._MAX_MAINTENANCE_LETTER
+
+    def chk_comments(self, value2test):
+        # Valid IO
+        CodeMetrics._verifyRange(value2test, self._VALID_RANGE)
+        # assess
+        return value2test >= self._MIN_COMMENT_RATIO
+
+    @staticmethod
+    def _verifyLetter(item2check, validList):
+        assert isinstance(item2check, (str)), "the Value shall be a string"
+        if item2check not in validList:
+            msg = ("The Letter is not in the authorized list ",
+                   f"({validList}) "
+                   f"Current :{item2check}")
+            raise ValueError(msg)
+        pass
+
+    @staticmethod
+    def _verifyRange(item2check, validRange) -> None:
+
+        assert isinstance(item2check, 
+                          (int, float)), "the Value shall be an int"
+
+        if (item2check < validRange['min'] or
+           item2check > validRange['max']):
+            msg = ("The value is not in the valid range "
+                   f"ie. [{validRange['min']},{validRange['max']}]")
+            raise ValueError(msg)
+
+        pass
+
+# -------------------------------------------------------------------
+#                          CLASS FILE ANALYSIS
+# -------------------------------------------------------------------
+
+
+class FileAnalysis(CodeMetrics):
+
+    # ---------- CREATOR -------------
 
     def __init__(self, filePath: str) -> None:
         """Create a FileAnalysis object based on a filePath
@@ -64,6 +119,9 @@ class FileAnalysis(ImmutableClass):
             msg = f"The file {filePath} is not a Python file (*.py)"
             raise ValueError(msg)
         self.filePath = os.path.abspath(filePath)
+
+        # initalisation with super class
+        super().__init__()
 
     def __str__(self) -> str:
         """Overload the print method"""
@@ -86,7 +144,7 @@ class FileAnalysis(ImmutableClass):
             f"\t- Complexity:\n"
         )
 
-        return msg+str(my_table)
+        return msg + str(my_table)
 
     @property
     def complexity(self) -> List[namedtuple]:
@@ -163,7 +221,7 @@ class FileAnalysis(ImmutableClass):
         """
         data = self._readFile()
 
-        return radon.metrics.mi_visit(data, multi=True)
+        return round(radon.metrics.mi_visit(data, multi=True),1)
 
     @property
     def maintenanceLetter(self) -> str:
@@ -201,7 +259,7 @@ class FileAnalysis(ImmutableClass):
         metrics = self.lineMetrics
 
         return metrics.nbLines
-    
+
     @property
     def commentsPercentage(self) -> float:
         """Provide the percentage of comments
@@ -232,91 +290,63 @@ class FileAnalysis(ImmutableClass):
             data = file.read()
         return data
 
-    def isValid(self,
-                max_complexityLetter: str = MAX_COMPLEXITY_LETTER,
-                max_maintenanceLetter: str = MAX_MAINTENACE_LETTER,
-                min_commentPercentage: float = MIN_COMMENT_RATION) -> bool:
+    def isValid(self) -> bool:
         """Check if a file is ok against code metrics
 
         Args:
-            max_complexityLetter (str, optional): maximum complexity letter.
-                Defaults to MAX_COMPLEXITY_LETTER ("A").
-            max_maintenanceLetter (str, optional): maximum maintenance letter.
-                Defaults to MAX_MAINTENACE_LETTER ("A").
-            min_commentPercentage (float, optional): minimum ration of comment
-                Defaults to MIN_COMMENT_RATION (30%).
 
         Returns:
             bool: code metrics assessment as boolean
         """
 
-        # I/O MANAGEMENT
-
-        assert isinstance(max_maintenanceLetter, str), "max_maintenanceLetter shall be a string"  # noqa: E501
-        assert max_maintenanceLetter in self._LIST_LETTERS, f"Letter shall be part of {self._LIST_LETTERS}"  # noqa: E501
-
-        assert isinstance(min_commentPercentage, (int, float)), "min_commentPercentage shall be a numeric"  # noqa: E501
-        assert min_commentPercentage >= 0 and min_commentPercentage <= 100
-
         # Evaluate code metrics
-        chk_maintenance = self.maintenanceLetter <= max_maintenanceLetter
-        chk_commentPercentage = (self.commentsPercentage >=
-                                 min_commentPercentage)
-        chk_complexity = self.getInvalidItems(max_complexityLetter=max_complexityLetter) == []  # noqa: E501
+        chk_maintenance = self.chk_maintenance(self.maintenanceLetter)  # noqa: E501
+        chk_commentPercentage = self.chk_comments(self.commentsPercentage)  # noqa: E501
+        chk_complexity = self.getInvalidItems() == []
 
         return chk_maintenance and chk_commentPercentage and chk_complexity
 
     def getInvalidItems(self,
-                        max_complexityLetter: str = MAX_COMPLEXITY_LETTER) -> List[namedtuple]:  # noqa: E501
+                        ) -> List[namedtuple]:  # noqa: E501
         """Provide the list of functions or methods with inappropriate
         complexity
 
         Args:
-            max_complexityLetter (str, optional): maximum complexity letter
-                Defaults to MAX_COMPLEXITY_LETTER ("A").
 
         Returns:
             List: List of namedtuple of the function with inappropriate
             complexity
         """
 
-        # IO MANAGEMENT
-        assert isinstance(max_complexityLetter, str), "max_maintenanceLetter shall be a string"  # noqa: E501
-        assert max_complexityLetter in self._LIST_LETTERS, f"Letter shall be part of {self._LIST_LETTERS}"  # noqa: E501
-
         # calculate complexity index
         CI = self.complexity
 
         invalidElement = [item for item in CI
-                          if item.complexityLetter > max_complexityLetter]
+                          if not self.chk_complexity(item.complexityLetter)]   # noqa: E501
         return invalidElement
 
     def getNumberInvalidItems(self,
-                              max_complexityLetter: str = MAX_COMPLEXITY_LETTER,  # noqa: E501
                               ) -> int:
         """Provide the number of Invalid Items
 
         Returns:
             int: _description_
         """
-        return len(self.getInvalidItems(max_complexityLetter))
+        return len(self.getInvalidItems())
 
     def getListInvalidItems(self,
-                            max_complexityLetter: str = MAX_COMPLEXITY_LETTER,
                             ) -> List[str]:
         """Provide the list of Invalid items (functions and Class method)
         that violate the complexity rules
 
         Args:
-            max_complexityLetter (str, optional): max complexity letter
-            Defaults to MAX_COMPLEXITY_LETTER.
 
         Returns:
             List[str]: list of Items a list of string with line number
         """
 
         res = []
-        for item in self.getInvalidItems(max_complexityLetter):
+        for item in self.getInvalidItems():
             if item.is_method:
                 res.append(item.class_name +
                            "." +
@@ -329,11 +359,13 @@ class FileAnalysis(ImmutableClass):
                            f" - {item.complexityLetter} ({item.complexity})")
         return res
 
-# FOLDER ANALYSIS
+
+# -------------------------------------------------------------------
+#                       FOLDER ANALYSIS
+# -------------------------------------------------------------------
 
 
-class FolderAnalysis(ImmutableClass):
-
+class FolderAnalysis(CodeMetrics):
     def __init__(self, folderPath: str) -> None:
         """create a Folder Analysis object
 
@@ -344,7 +376,9 @@ class FolderAnalysis(ImmutableClass):
             msg = f"{folderPath} is not a valid folder path"
             raise ValueError(msg)
         self.folderPath = os.path.abspath(folderPath)
-        pass
+
+        # initalisation with super class
+        super(self).__init__()
 
     def __str__(self) -> str:
 
@@ -394,6 +428,7 @@ class FolderAnalysis(ImmutableClass):
         complexityList = []
 
         for filePath in self.listFiles:
+            # todo add parameters
             newList = [filePath, FileAnalysis(filePath).complexity]
             complexityList.append(newList)
         return complexityList
@@ -419,13 +454,10 @@ class FolderAnalysis(ImmutableClass):
         return res
 
     def getResults(self,
-                   max_complexityLetter: str = FileAnalysis.MAX_COMPLEXITY_LETTER,  # noqa: E501
                    ) -> List:
         """Provide the list of code metrics for all analyzed python files
 
         Args:
-            max_complexityLetter (str, optional): Maximum Complexity leter
-             Defaults to FileAnalysis.MAX_COMPLEXITY_LETTER.('A')
 
         Returns:
             List: list of namedtuple
@@ -439,8 +471,8 @@ class FolderAnalysis(ImmutableClass):
                                   nbLines=FileAnalysis(filePath).nbLines,
                                   commentPercentage=FileAnalysis(filePath).commentsPercentage,  # noqa: E501
                                   maintenanceLetter=FileAnalysis(filePath).maintenanceLetter,  # noqa: E501
-                                  complexity_Violations_nb=FileAnalysis(filePath).getNumberInvalidItems(max_complexityLetter),  # noqa: E501
-                                  complexity_Violations=FileAnalysis(filePath).getListInvalidItems(max_complexityLetter),  # noqa: E501
+                                  complexity_Violations_nb=FileAnalysis(filePath).getNumberInvalidItems(),  # noqa: E501
+                                  complexity_Violations=FileAnalysis(filePath).getListInvalidItems(),  # noqa: E501
                                   complexity=FileAnalysis(filePath).complexity
                                   )
             list_results.append(newRes)
@@ -455,25 +487,17 @@ class FolderAnalysis(ImmutableClass):
         return list_results
 
     def isValid(self,
-                max_complexityLetter: str = FileAnalysis.MAX_COMPLEXITY_LETTER,  # noqa: E501
-                max_maintenanceLetter: str = FileAnalysis.MAX_MAINTENACE_LETTER,  # noqa: E501
-                min_commentPercentage: float = FileAnalysis.MIN_COMMENT_RATION,  # noqa: E501
                 ) -> bool:
         """Check if all Python files in the path (including subdirectories)
         are valid against code metrics
 
         Args:
-            max_complexityLetter (str, optional): maximum complexity letter.
-                Defaults to MAX_COMPLEXITY_LETTER ("A").
-            max_maintenanceLetter (str, optional): maximum maintenance letter.
-                Defaults to MAX_MAINTENACE_LETTER ("A").
-            min_commentPercentage (float, optional): minimum ration of comment
-                Defaults to MIN_COMMENT_RATION (30%).
+
         Returns:
             bool: boolean Ture if OK false if not valid
         """
 
-        res = all([FileAnalysis(filePath).isValid(max_complexityLetter, max_maintenanceLetter, min_commentPercentage)   # noqa: E501
+        res = all([FileAnalysis(filePath).isValid()
                    for filePath in self.listFiles])
         return res
 
