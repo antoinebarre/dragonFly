@@ -17,6 +17,9 @@ import radon.complexity
 import radon.metrics
 import radon.raw
 
+import hashlib
+import datetime
+
 from prettytable import PrettyTable
 
 
@@ -146,6 +149,71 @@ class FileAnalysis(CodeMetrics):
 
         return msg + str(my_table)
 
+    # -------------------- FILE PROPERTIES ----------------------------
+
+    @property
+    def fileName(self) -> str:
+        """File name with its extension"""
+        dir, fileName = os.path.split(self.filePath)
+        return fileName
+
+    @property
+    def fileFolder(self):
+        """path of the folder of the analyzed file"""
+        dir, file = os.path.split(self.filePath)
+        return dir
+
+    @property
+    def checksum_MD5(self)-> str:
+        """ Provide the checksum MD5 of the Python File"""
+        data = self._readFile()
+
+        return hashlib.md5(data.encode('utf-8')).hexdigest()
+
+    @property
+    def sha256(self)-> str:
+        """ Provide the sha256 of the Python File"""
+        data = self._readFile()
+
+        return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+    @property
+    def lastModificationDate(self) -> datetime.datetime:
+        timestamp = os.path.getmtime(self.filePath)
+        # convert timestamp into DateTime object
+        datestamp = datetime.datetime.fromtimestamp(timestamp)
+
+        return datestamp
+
+
+
+
+    @property
+    def numberOfClasses(self):
+        """Provide the number of Classes defintion in a file
+
+        Returns:
+            int: number of Classes
+        """
+        # read file
+        data = self._readFile()
+
+        tree = ast.parse(data)
+        return sum(isinstance(exp, ast.ClassDef) for exp in tree.body)
+
+    @property
+    def numberOfFunctions(self):
+        """Provide the number of Classes defintion in a file
+
+        Returns:
+            int: number of Classes
+        """
+        with open(self.filePath) as f:
+            tree = ast.parse(f.read())
+        return sum(isinstance(exp, ast.FunctionDef) for exp in tree.body)
+
+    # -------------- CODE METRICS -----------------
+
     @property
     def complexity(self) -> List[namedtuple]:
         """Complexity as namedtuple with associated information"""
@@ -173,42 +241,6 @@ class FileAnalysis(CodeMetrics):
             result.remove([])
 
         return result
-
-    @property
-    def fileName(self) -> str:
-        """File name with its extension"""
-        dir, fileName = os.path.split(self.filePath)
-        return fileName
-
-    @property
-    def fileFolder(self):
-        """path of the folder of the analyzed file"""
-        dir, file = os.path.split(self.filePath)
-        return dir
-
-    @property
-    def numberOfClasses(self):
-        """Provide the number of Classes defintion in a file
-
-        Returns:
-            int: number of Classes
-        """
-        # read file
-        data = self._readFile()
-
-        tree = ast.parse(data)
-        return sum(isinstance(exp, ast.ClassDef) for exp in tree.body)
-
-    @property
-    def numberOfFunctions(self):
-        """Provide the number of Classes defintion in a file
-
-        Returns:
-            int: number of Classes
-        """
-        with open(self.filePath) as f:
-            tree = ast.parse(f.read())
-        return sum(isinstance(exp, ast.FunctionDef) for exp in tree.body)
 
     @property
     def maintenanceIndex(self) -> float:
