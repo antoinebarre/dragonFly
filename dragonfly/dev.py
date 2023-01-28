@@ -22,6 +22,9 @@ import datetime
 
 from prettytable import PrettyTable
 
+# Exported items
+__all__ = ["FileAnalysis", "FolderAnalysis"]
+
 
 # NAMED TUPLE DEFINITION
 
@@ -48,6 +51,7 @@ FolderResult = namedtuple("FolderResult",
 
 
 class CodeMetrics():
+    """PRIVATE CLASS USED FOR FILE AND FOLDER ANALYSIS"""
     _MAX_COMPLEXITY_LETTER = "B"
     _MAX_MAINTENANCE_LETTER = "A"
     _MIN_COMMENT_RATIO = 30
@@ -246,12 +250,12 @@ class FileAnalysis(CodeMetrics):
         result = []
 
         # function
-        result.extend(_collectInfo(evaluation.functions, self.filePath))
+        result.extend(self._collectInfo(evaluation.functions, self.filePath))
 
         # Class
         list_classes = evaluation.classes
         for classItem in list_classes:
-            result.extend(_collectInfo(classItem.methods, self.filePath))
+            result.extend(self._collectInfo(classItem.methods, self.filePath))
 
         # clean result of empty lists
         while [] in result:
@@ -422,6 +426,28 @@ class FileAnalysis(CodeMetrics):
                            f" - {item.complexityLetter} ({item.complexity})")
         return res
 
+    @staticmethod
+    def _collectInfo(items, pythonFile):
+        """PRIVATE FUNCTION - use to collect Cycloamtic complexity
+
+        Args:
+            items (list): list of complexity result
+            pythonFile (string): path of the file
+
+        Returns:
+            list : list of namedtuples
+        """
+        info = []
+        for item in items:
+            info.append(ComplexityMetrics(
+                        name=item.name,
+                        complexity=item.complexity,
+                        complexityLetter=radon.complexity.cc_rank(item.complexity),  # noqa: E501
+                        is_method=item.is_method,
+                        class_name=item.classname,
+                        startLine=item.lineno))
+        return info
+
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
@@ -569,27 +595,3 @@ class FolderAnalysis(ImmutableClass):
             detailledAnalysis
         )
         return msg
-
-# -------------------- UTILS -------------------------
-
-
-def _collectInfo(items, pythonFile):
-    """PRIVATE FUNCTION - use to collect Cycloamtic complexity
-
-    Args:
-        items (list): list of complexity result
-        pythonFile (string): path of the file
-
-    Returns:
-        list : list of namedtuples
-    """
-    info = []
-    for item in items:
-        info.append(ComplexityMetrics(
-                    name=item.name,
-                    complexity=item.complexity,
-                    complexityLetter=radon.complexity.cc_rank(item.complexity),
-                    is_method=item.is_method,
-                    class_name=item.classname,
-                    startLine=item.lineno))
-    return info
