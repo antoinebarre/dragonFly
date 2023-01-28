@@ -128,26 +128,45 @@ class FileAnalysis(CodeMetrics):
 
     def __str__(self) -> str:
         """Overload the print method"""
-
+        # Create table for complexity
         CI = self.complexity
-
-        my_table = PrettyTable()
-
-        my_table.field_names = ["Item Name", "Class",
+        my_tableCI = PrettyTable()
+        my_tableCI.field_names = ["Item Name", "Class",
                                 "Complexity Letter", "Line"]
-
         for item in CI:
-            my_table.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
+            my_tableCI.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
 
+        # create a table for validation status
+        my_tableST = PrettyTable()
+        validationStatus = self.getValidationStatus()
+        my_tableST.field_names = ["Criteria", "Status"]
+
+        for item in validationStatus._fields:
+            my_tableST.add_row([item, getattr(validationStatus, item)])
+
+        # Create Message
         msg = (
-            f"Code Metrics for {self.fileName}:\n"
-            f"\t- Path: {self.fileFolder}\n"
-            f"\t- Maintenability: {self.maintenanceLetter} ({self.maintenanceIndex})\n"  # noqa: E501
-            f"\t- Comment Percentage: {self.commentsPercentage} %\n"
-            f"\t- Complexity:\n"
+            "File Description :\n".upper() +
+            f"\t- File:              {self.fileName}\n" +
+            f"\t- Path:              {self.fileFolder}\n" +
+            f"\t- Last Modifcation:  {self.lastModificationDate}\n" +
+            f"\t- CheckSum MD5:      {self.checksum_MD5}\n" +
+            f"\t- SHA256:            {self.sha256}\n" +
+            "\n" +
+            "File Validation :\n".upper() +
+            f"\t- Max Complexity:       {self._MAX_COMPLEXITY_LETTER}\n" +
+            f"\t- Max Maintenance:      {self._MAX_MAINTENANCE_LETTER}\n" +
+            f"\t- Min Comment Ration:   {self._MIN_COMMENT_RATIO} %\n" +
+            "\n" +
+            f"{my_tableST}\n" +
+            "\n" +
+            "File Metrics :\n".upper()+
+            f"\t- Maintenability:    {self.maintenanceLetter} ({self.maintenanceIndex})\n" +  # noqa: E501
+            f"\t- Coment Percentage: {self.commentsPercentage} %\n" +
+            f"\t- Complexity:\n" +
+            "\n"
         )
-
-        return msg + str(my_table)
+        return msg + str(my_tableCI)
 
     # -------------------- FILE PROPERTIES ----------------------------
 
@@ -179,14 +198,12 @@ class FileAnalysis(CodeMetrics):
 
     @property
     def lastModificationDate(self) -> datetime.datetime:
+        """Provide the last modification date as datetime"""
         timestamp = os.path.getmtime(self.filePath)
         # convert timestamp into DateTime object
         datestamp = datetime.datetime.fromtimestamp(timestamp)
 
         return datestamp
-
-
-
 
     @property
     def numberOfClasses(self):
@@ -322,6 +339,20 @@ class FileAnalysis(CodeMetrics):
             data = file.read()
         return data
 
+    def getValidationStatus(self) -> namedtuple:
+
+        ValidationStatus = namedtuple("ValidationStatus", (
+            "maintenace",
+            "complexity",
+            "commentRation"
+        ))
+
+        return ValidationStatus(
+            maintenace=self.chk_maintenance(self.maintenanceLetter),  # noqa: E501
+            commentRation=self.chk_comments(self.commentsPercentage),
+            complexity=self.getInvalidItems() == []
+        )
+
     def isValid(self) -> bool:
         """Check if a file is ok against code metrics
 
@@ -331,12 +362,12 @@ class FileAnalysis(CodeMetrics):
             bool: code metrics assessment as boolean
         """
 
-        # Evaluate code metrics
-        chk_maintenance = self.chk_maintenance(self.maintenanceLetter)  # noqa: E501
-        chk_commentPercentage = self.chk_comments(self.commentsPercentage)  # noqa: E501
-        chk_complexity = self.getInvalidItems() == []
+        validationStatus = self.getValidationStatus()
 
-        return chk_maintenance and chk_commentPercentage and chk_complexity
+        # Evaluate code metrics
+        chk = all([value 
+                  for value in validationStatus])
+        return chk
 
     def getInvalidItems(self,
                         ) -> List[namedtuple]:  # noqa: E501
@@ -390,7 +421,7 @@ class FileAnalysis(CodeMetrics):
                            f" (L{item.startLine})" +
                            f" - {item.complexityLetter} ({item.complexity})")
         return res
-
+    
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
