@@ -3,7 +3,7 @@
 """
 
 
-# IMPORT MODULE
+# IMPORT MODULES
 import os
 import ast
 from collections import namedtuple
@@ -36,10 +36,10 @@ LineMetric = namedtuple("LineMetric",
                          "nbMultiCommentLines"])
 
 FolderResult = namedtuple("FolderResult",
-                          ["filePath", "nbLines",
-                           "commentPercentage", "maintenanceLetter",
-                           "complexity_Violations_nb", "complexity",
-                           "complexity_Violations"])
+                          ["filePath",
+                           "stringInfo",
+                           "isValid",
+                           "validStatus"])
 
 
 # -------------------------------------------------------------------
@@ -48,9 +48,9 @@ FolderResult = namedtuple("FolderResult",
 
 
 class CodeMetrics():
-    _MAX_COMPLEXITY_LETTER = "A"
+    _MAX_COMPLEXITY_LETTER = "B"
     _MAX_MAINTENANCE_LETTER = "A"
-    _MIN_COMMENT_RATIO = 30 
+    _MIN_COMMENT_RATIO = 30
     _VALID_LETTERS = ["A", "B", "C", "D", "E"]
     _VALID_RANGE = {"min": 0, "max": 100}
 
@@ -85,7 +85,7 @@ class CodeMetrics():
     @staticmethod
     def _verifyRange(item2check, validRange) -> None:
 
-        assert isinstance(item2check, 
+        assert isinstance(item2check,
                           (int, float)), "the Value shall be an int"
 
         if (item2check < validRange['min'] or
@@ -132,7 +132,7 @@ class FileAnalysis(CodeMetrics):
         CI = self.complexity
         my_tableCI = PrettyTable()
         my_tableCI.field_names = ["Item Name", "Class",
-                                "Complexity Letter", "Line"]
+                                  "Complexity Letter", "Line"]
         for item in CI:
             my_tableCI.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
 
@@ -153,17 +153,17 @@ class FileAnalysis(CodeMetrics):
             f"\t- CheckSum MD5:      {self.checksum_MD5}\n" +
             f"\t- SHA256:            {self.sha256}\n" +
             "\n" +
-            "File Validation :\n".upper() +
+            "File Validation Criterias:\n".upper() +
             f"\t- Max Complexity:       {self._MAX_COMPLEXITY_LETTER}\n" +
             f"\t- Max Maintenance:      {self._MAX_MAINTENANCE_LETTER}\n" +
             f"\t- Min Comment Ration:   {self._MIN_COMMENT_RATIO} %\n" +
             "\n" +
             f"{my_tableST}\n" +
             "\n" +
-            "File Metrics :\n".upper()+
+            "File Metrics :\n".upper() +
             f"\t- Maintenability:    {self.maintenanceLetter} ({self.maintenanceIndex})\n" +  # noqa: E501
             f"\t- Coment Percentage: {self.commentsPercentage} %\n" +
-            f"\t- Complexity:\n" +
+            "\t- Complexity:\n" +
             "\n"
         )
         return msg + str(my_tableCI)
@@ -183,14 +183,14 @@ class FileAnalysis(CodeMetrics):
         return dir
 
     @property
-    def checksum_MD5(self)-> str:
+    def checksum_MD5(self) -> str:
         """ Provide the checksum MD5 of the Python File"""
         data = self._readFile()
 
         return hashlib.md5(data.encode('utf-8')).hexdigest()
 
     @property
-    def sha256(self)-> str:
+    def sha256(self) -> str:
         """ Provide the sha256 of the Python File"""
         data = self._readFile()
 
@@ -270,7 +270,7 @@ class FileAnalysis(CodeMetrics):
         """
         data = self._readFile()
 
-        return round(radon.metrics.mi_visit(data, multi=True),1)
+        return round(radon.metrics.mi_visit(data, multi=True), 1)
 
     @property
     def maintenanceLetter(self) -> str:
@@ -342,14 +342,14 @@ class FileAnalysis(CodeMetrics):
     def getValidationStatus(self) -> namedtuple:
 
         ValidationStatus = namedtuple("ValidationStatus", (
-            "maintenace",
+            "maintenance",
             "complexity",
-            "commentRation"
+            "commentRatio"
         ))
 
         return ValidationStatus(
-            maintenace=self.chk_maintenance(self.maintenanceLetter),  # noqa: E501
-            commentRation=self.chk_comments(self.commentsPercentage),
+            maintenance=self.chk_maintenance(self.maintenanceLetter),  # noqa: E501
+            commentRatio=self.chk_comments(self.commentsPercentage),
             complexity=self.getInvalidItems() == []
         )
 
@@ -365,7 +365,7 @@ class FileAnalysis(CodeMetrics):
         validationStatus = self.getValidationStatus()
 
         # Evaluate code metrics
-        chk = all([value 
+        chk = all([value
                   for value in validationStatus])
         return chk
 
@@ -421,15 +421,18 @@ class FileAnalysis(CodeMetrics):
                            f" (L{item.startLine})" +
                            f" - {item.complexityLetter} ({item.complexity})")
         return res
-    
+
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
 # -------------------------------------------------------------------
 
 
-class FolderAnalysis(CodeMetrics):
-    def __init__(self, folderPath: str) -> None:
+class FolderAnalysis(ImmutableClass):
+    def __init__(self, folderPath: str,
+                 max_complexity_letter: str = "B",
+                 max_maintenance_letter: str = "A",
+                 min_comment_ration: int = 30) -> None:
         """create a Folder Analysis object
 
         Args:
@@ -440,31 +443,25 @@ class FolderAnalysis(CodeMetrics):
             raise ValueError(msg)
         self.folderPath = os.path.abspath(folderPath)
 
+        # settings :
+        self.max_complexity_letter = max_complexity_letter
+        self.max_maintenance_letter = max_maintenance_letter
+        self.min_comment_ration = min_comment_ration
+
+        # collect all the results
+        self._results = self._getResults()
+
         # initalisation with super class
-        super(self).__init__()
+        super().__init__()
 
     def __str__(self) -> str:
-
         msg = (
             "CODE METRICS ANALYSIS for "
             f"{self.folderPath}\n"
         )
+        return msg
 
-        status = self.getResults()
-
-        my_table = PrettyTable()
-
-        my_table.field_names = ["File Name", "Number of Lines", "Comment %",
-                                "Maintenance", "Complexity Violation"]
-
-        for item in status:
-            my_table.add_row([item.filePath,
-                              item.nbLines,
-                              item.commentPercentage,
-                              item.maintenanceLetter,
-                              item.complexity_Violations_nb])
-
-        return msg+str(my_table)
+    # -------------------- PROPERTY ------------------------
 
     @property
     def listFiles(self) -> List[str]:
@@ -483,41 +480,8 @@ class FolderAnalysis(CodeMetrics):
                            )]
         return pythonFiles
 
-    @property
-    def complexity(self) -> List:
-        """List of all function and method of the file with the complexity
-        information"""
-
-        complexityList = []
-
-        for filePath in self.listFiles:
-            # todo add parameters
-            newList = [filePath, FileAnalysis(filePath).complexity]
-            complexityList.append(newList)
-        return complexityList
-
-    @property
-    def maintenanceLetter(self) -> List:
-        """Maintenance Letter of all Python files
-
-        Returns:
-            List: list of all filePath with the maintenance Letter
-        """
-        res = [[filePath, FileAnalysis(filePath).maintenanceLetter]
-               for filePath in self.listFiles]
-        return res
-
-    @property
-    def commentPercentage(self):
-        """Comment Percentage for all Python file in the directorie
-        (including subdirectories)
-        """
-        res = [[filePath, FileAnalysis(filePath).commentsPercentage]
-               for filePath in self.listFiles]
-        return res
-
-    def getResults(self,
-                   ) -> List:
+    def _getResults(self,
+                    ) -> List:
         """Provide the list of code metrics for all analyzed python files
 
         Args:
@@ -529,23 +493,22 @@ class FolderAnalysis(CodeMetrics):
         list_results = []
 
         for filePath in self.listFiles:
+
+            obj = FileAnalysis(filePath)
+            # apply the settings
+            obj._MAX_COMPLEXITY_LETTER = self.max_complexity_letter
+            obj._MAX_MAINTENANCE_LETTER = self.max_maintenance_letter
+            obj._MIN_COMMENT_RATIO = self.min_comment_ration
+
+            print(f">>> Analysis of {obj.fileName}...")
+
             newRes = FolderResult(filePath=os.path.relpath(filePath,
                                                            self.folderPath),
-                                  nbLines=FileAnalysis(filePath).nbLines,
-                                  commentPercentage=FileAnalysis(filePath).commentsPercentage,  # noqa: E501
-                                  maintenanceLetter=FileAnalysis(filePath).maintenanceLetter,  # noqa: E501
-                                  complexity_Violations_nb=FileAnalysis(filePath).getNumberInvalidItems(),  # noqa: E501
-                                  complexity_Violations=FileAnalysis(filePath).getListInvalidItems(),  # noqa: E501
-                                  complexity=FileAnalysis(filePath).complexity
+                                  stringInfo=str(obj),
+                                  isValid=obj.isValid(),
+                                  validStatus=obj.getValidationStatus()
                                   )
             list_results.append(newRes)
-
-        # res = [[os.path.relpath(filePath, self.folderPath),
-        #         FileAnalysis(filePath).commentsPercentage,
-        #         FileAnalysis(filePath).maintenanceLetter,
-        #         FileAnalysis(filePath).getListInvalidItems(max_complexityLetter)  # noqa: E501
-        #         ]
-        #        for filePath in self.listFiles]
 
         return list_results
 
@@ -559,11 +522,53 @@ class FolderAnalysis(CodeMetrics):
         Returns:
             bool: boolean Ture if OK false if not valid
         """
-
-        res = all([FileAnalysis(filePath).isValid()
-                   for filePath in self.listFiles])
+        res = all([item.isValid
+                   for item in self._results])
         return res
 
+    def toString(self) -> str:
+        """Export Folder analysis as a string
+
+        Returns:
+            str: string with the folder analysis outputs
+        """
+
+        # create a table for validation status
+        my_tableST = PrettyTable()
+        results = self._results
+
+        # fields = results[0].validStatus._fields
+        # print(fields)
+        my_tableST.field_names = (["file Name"] +
+                                  list(results[0].validStatus._fields))
+
+        # create detailled paragraph and global table with status per file
+        detailledAnalysis = ""
+        for result in results:
+            status = [result.filePath] + [getattr(result.validStatus, item)
+                                          for item in
+                                          result.validStatus._fields]
+            my_tableST.add_row(status)
+            detailledAnalysis += ("\n>>> " + result.filePath.upper() +
+                                  "\n" + result.stringInfo + "\n")
+
+        msg = (
+            "#####################################################\n" +
+            "             CODE METRICS ANALYSIS\n" +
+            "#####################################################\n" +
+            "\n" +
+            "Folder Description :\n".upper() +
+            f"\t- folder:            {self.folderPath}\n" +
+            "\n" +
+            "Status :\n".upper() +
+            f"{my_tableST}\n" +
+            "\n" +
+            "------------------------------------------------------\n" +
+            "              Detailled Analysis\n".upper() +
+            "------------------------------------------------------\n" +
+            detailledAnalysis
+        )
+        return msg
 
 # -------------------- UTILS -------------------------
 
