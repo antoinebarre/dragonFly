@@ -1,10 +1,6 @@
 """SUBMODULE GEOGRAPHY
     This module contains all the geographic utilities for
     the DragonFlly application
-
-
-LIST OF CLASSES:
-    - Position : geographic position classes
 """
 
 # MODULES IMPORT
