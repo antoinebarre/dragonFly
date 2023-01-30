@@ -22,6 +22,9 @@ import datetime
 
 from prettytable import PrettyTable
 
+from rich.console import Console
+from rich.style import Style
+
 # Exported items
 __all__ = ["FileAnalysis", "FolderAnalysis"]
 
@@ -333,6 +336,8 @@ class FileAnalysis(CodeMetrics):
 
         return round(100 * (commentsLines / effectiveLines), 1)
 
+    # ---------------------- UTILS -----------------------
+
     def _readFile(self):
         """PRIVATE FUNCTION - read the data
 
@@ -481,78 +486,6 @@ class FolderAnalysis(ImmutableClass):
         super().__init__()
 
     def __str__(self) -> str:
-        msg = (
-            "CODE METRICS ANALYSIS for "
-            f"{self.folderPath}\n"
-        )
-        return msg
-
-    # -------------------- PROPERTY ------------------------
-
-    @property
-    def listFiles(self) -> List[str]:
-        """List all python files in directory including subdirectories
-
-        Returns:
-            List[str]: list of all files with absolute path
-        """
-
-        pythonFiles = [os.path.join(root, name)
-                       for root, dirs, files in os.walk(self.folderPath)
-                       for name in files
-                       if (name.endswith((".py")) and  # only python files
-                           name != "__init__.py" and  # remove __init__
-                           not ("test" in name.lower())  # remove test file
-                           )]
-        return pythonFiles
-
-    def _getResults(self,
-                    ) -> List:
-        """Provide the list of code metrics for all analyzed python files
-
-        Args:
-
-        Returns:
-            List: list of namedtuple
-        """
-
-        list_results = []
-
-        for filePath in self.listFiles:
-
-            obj = FileAnalysis(filePath)
-            # apply the settings
-            obj._MAX_COMPLEXITY_LETTER = self.max_complexity_letter
-            obj._MAX_MAINTENANCE_LETTER = self.max_maintenance_letter
-            obj._MIN_COMMENT_RATIO = self.min_comment_ration
-
-            print(f">>> Analysis of {obj.fileName}...")
-
-            newRes = FolderResult(filePath=os.path.relpath(filePath,
-                                                           self.folderPath),
-                                  stringInfo=str(obj),
-                                  isValid=obj.isValid(),
-                                  validStatus=obj.getValidationStatus()
-                                  )
-            list_results.append(newRes)
-
-        return list_results
-
-    def isValid(self,
-                ) -> bool:
-        """Check if all Python files in the path (including subdirectories)
-        are valid against code metrics
-
-        Args:
-
-        Returns:
-            bool: boolean Ture if OK false if not valid
-        """
-        res = all([item.isValid
-                   for item in self._results])
-        return res
-
-    def toString(self) -> str:
         """Export Folder analysis as a string
 
         Returns:
@@ -595,3 +528,85 @@ class FolderAnalysis(ImmutableClass):
             detailledAnalysis
         )
         return msg
+
+    # -------------------- PROPERTY ------------------------
+
+    @property
+    def listFiles(self) -> List[str]:
+        """List all python files in directory including subdirectories
+
+        Returns:
+            List[str]: list of all files with absolute path
+        """
+
+        pythonFiles = [os.path.join(root, name)
+                       for root, dirs, files in os.walk(self.folderPath)
+                       for name in files
+                       if (name.endswith((".py")) and  # only python files
+                           name != "__init__.py" and  # remove __init__
+                           not ("test" in name.lower())  # remove test file
+                           )]
+        return pythonFiles
+
+    def _getResults(self,
+                    ) -> List:
+        """Provide the list of code metrics for all analyzed python files
+
+        Args:
+
+        Returns:
+            List: list of namedtuple
+        """
+
+        # initiate results list
+        list_results = []
+
+        # initiate Console Output
+        console = Console()
+
+        # console output
+        console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
+                     style=Style(color="cyan"))
+        console.print("[bold]Platform :")
+        console.print(f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]")
+        console.print(f"[bold]Number of Elements :  {len(self.listFiles)}")
+
+
+        for filePath in self.listFiles:
+
+            obj = FileAnalysis(filePath)
+            # apply the settings
+            obj._MAX_COMPLEXITY_LETTER = self.max_complexity_letter
+            obj._MAX_MAINTENANCE_LETTER = self.max_maintenance_letter
+            obj._MIN_COMMENT_RATIO = self.min_comment_ration
+
+            # collect info
+            print(f">>> Analysis of {obj.fileName}...")
+
+
+
+            newRes = FolderResult(filePath=os.path.relpath(filePath,
+                                                           self.folderPath),
+                                  stringInfo=str(obj),
+                                  isValid=obj.isValid(),
+                                  validStatus=obj.getValidationStatus()
+                                  )
+            list_results.append(newRes)
+
+            # console output
+
+        return list_results
+
+    def isValid(self,
+                ) -> bool:
+        """Check if all Python files in the path (including subdirectories)
+        are valid against code metrics
+
+        Args:
+
+        Returns:
+            bool: boolean Ture if OK false if not valid
+        """
+        res = all([item.isValid
+                   for item in self._results])
+        return res
