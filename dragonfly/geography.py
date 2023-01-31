@@ -381,10 +381,10 @@ def getRange(lat1: float, long1: float, lat2: float, long2: float,
     """
 
     # latitue assertion
-    msg = ("Latitudes Value shall be lower than 90"
-           f" (lat1: {np.rad2deg(lat1)} , lat2: {np.rad2deg(lat2)})")
-
-    assert abs(lat1) <= np.pi/2 and abs(lat2) <= np.pi/2, msg
+    if not (abs(lat1) <= np.pi/2 and abs(lat2) <= np.pi/2):
+        msg = ("Latitudes Value shall be lower than 90"
+               f" (lat1: {np.rad2deg(lat1)} , lat2: {np.rad2deg(lat2)})")
+        raise ValueError(msg)
 
     # short-circuit coincident points
     if lat1 == lat2 and long1 == long2:
@@ -399,12 +399,16 @@ def getRange(lat1: float, long1: float, lat2: float, long2: float,
     # constant
     CONVERGENCE_THRESHOLD = 1e-12
 
-    # correct for errors at exact poles by adjusting 0.6 millimeters:
-    if np.absolute(np.pi/2-np.absolute(lat1)) < 1e-10:
-        lat1 = math.copysign(np.pi/2-(1e-10), lat1)
+    def CorrectPole(lat: float) -> float:
+        # correct for errors at exact poles by adjusting 0.6 millimeters:
+        if np.absolute(np.pi/2-np.absolute(lat1)) < 1e-10:
+            return math.copysign(np.pi/2-(1e-10), lat1)
+        else:
+            return lat
 
-    if np.absolute(np.pi/2-np.absolute(lat2)) < 1e-10:
-        lat2 = math.copysign(np.pi/2-(1e-10), lat2)
+    # fix Pole
+    lat1 = CorrectPole(lat1)
+    lat2 = CorrectPole(lat2)
 
     U1 = np.arctan((1 - f) * np.tan(lat1))
     U2 = np.arctan((1 - f) * np.tan(lat2))

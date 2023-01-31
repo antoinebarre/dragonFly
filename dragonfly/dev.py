@@ -1,8 +1,14 @@
+"""
+######################################################################
+                        DEVELOPMENT TOOLS
+######################################################################
+"""
+
+# Modules Import
 from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Any
 import os
 from collections import namedtuple
-
 
 from radon.visitors import ComplexityVisitor
 import radon.complexity
@@ -33,7 +39,7 @@ _ListResults = namedtuple("_ListResults", (
     "results"
 ))
 
-__all__ =[
+__all__ = [
     "FileAnalysis",
     "FolderAnalysis"
 ]
@@ -42,12 +48,19 @@ __all__ =[
 #                       CRITERIA CLASSES
 # -------------------------------------------------------------------
 
+
 class CodeMetric(ABC):
     """ABSTRACT METHOD FOR CODE METRICS"""
     _VALID_LETTERS = ["A", "B", "C", "D", "E"]
     _VALID_RANGE = {"min": 0, "max": 100}
 
     def __init__(self, filePath: str) -> None:
+        """Generic Creator for criteria
+
+        Args:
+            filePath (str): file path (absolute or relative)
+
+        """
         # check if filepath is a existing file
         if not (os.path.isfile(filePath)):
             msg = f"{filePath} is not a valid path"
@@ -248,8 +261,10 @@ class CyclomaticComplexity(CodeMetric):
                  ):
 
                 if result.is_method:
+                    # result is a class method
                     itemName = f"{result.class_name}.{result.name} "
                 else:
+                    # result is a function
                     itemName = f"{result.name}"
 
                 msg += (f"{itemName} " +
@@ -258,6 +273,7 @@ class CyclomaticComplexity(CodeMetric):
                         "\n"
                         )
 
+        # create output object as namedtuple
         obj = _ListError(
             criteria_title=self.title,
             criteria_value="Max " + str(self.criteria_value),
@@ -485,6 +501,7 @@ class Maintenability(CodeMetric):
 #                       FILE ANALYSIS
 # -------------------------------------------------------------------
 
+
 class FileAnalysis():
 
     # ---------- CREATOR -------------
@@ -638,6 +655,7 @@ class FileAnalysis():
         # initiate the outputs
         msgDetails = ""
 
+        # Create table for Result
         my_tableResult = PrettyTable()
         my_tableResult.field_names = ["Criteria",
                                       "Expected Value",
@@ -707,11 +725,18 @@ class FolderAnalysis(ImmutableClass):
                  max_complexity_letter: str = "B",
                  max_maintenance_letter: str = "A",
                  min_comment_ration: int = 30) -> None:
-        """create a Folder Analysis object
+        """_summary_
 
         Args:
             folderPath (str): folder path (absolute or relative)
+            max_complexity_letter (str, optional): maximum complexity.
+                 Defaults to "B".
+            max_maintenance_letter (str, optional): maxim maintenance.
+                 Defaults to "A".
+            min_comment_ration (int, optional): Minimum COmment ratio
+                 Defaults to 30.
         """
+
         if not (os.path.isdir(folderPath)):
             msg = f"{folderPath} is not a valid folder path"
             raise ValueError(msg)
@@ -738,7 +763,7 @@ class FolderAnalysis(ImmutableClass):
         # Create header
         header_msg = (
             "#"*LINE_SIZE + "\n" +
-            "             CODE METRICS ANALYSIS\n" +
+            "CODE METRICS ANALYSIS".center(LINE_SIZE) + "\n" +
             "#"*LINE_SIZE + "\n" +
             "\n" +
             "Folder Description :\n".upper() +

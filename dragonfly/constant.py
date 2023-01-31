@@ -8,6 +8,7 @@ import math
 
 _ELLIPSOID = ["WGS84", "SPHERICAL"]
 
+# List of available Ellipsoid
 _ELLIPSOID_PARAMETER = [
     {"name": "WGS84", "semiMajorAxis": 6378137.0,
      "flattening": 1/298.257223563, "j2": 1.08263E-3},
@@ -15,7 +16,12 @@ _ELLIPSOID_PARAMETER = [
      "flattening": 0, "J2": 0}
 ]
 
+# default ellipsoid model
 _DEFAULT_MODEL = "WGS84"
+
+# -------------------------------------------------------------------
+#                       FOLDER ANALYSIS
+# -------------------------------------------------------------------
 
 
 class EarthModel():
@@ -23,7 +29,14 @@ class EarthModel():
     earthRotationRate = 72.92115E-6  # rotation rate from the WGS84 rad/s
     mu = 3.986004418E14  # m-3s-2
 
-    def __init__(self, model=_DEFAULT_MODEL) -> None:
+    # ---------------------- CREATOR ------------------------
+
+    def __init__(self, model: str = _DEFAULT_MODEL) -> None:
+        """Create Earth Model Object
+
+        Args:
+            model (str, optional): ellipsoid model name. Defaults to WGS84.
+        """
         try:
             model = model.upper()
         except Exception:
@@ -53,34 +66,54 @@ class EarthModel():
                    )
             raise AttributeError(msg)
 
+    # --------------------- PROPERTIES
     @property
-    def a(self):
-        """_semi major axis value of the ellispoid in meters
+    def a(self) -> float:
+        """semi major axis value of the ellispoid in meters
+
+        Returns:
+            float: semi major axis value of the ellispoid in meters
         """
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
         return model_dict["semiMajorAxis"]
 
     @property
-    def f(self):
-        """flattening of the ellispoid"""
+    def f(self) -> float:
+        """flattening of the ellispoid
+
+        Returns:
+            float: flattening of the ellispoid
+        """
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
         return model_dict["flattening"]
 
     @property
-    def b(self):
-        """Semi minor acis of the ellispoid in meters"""
+    def b(self) -> float:
+        """Semi minor acis of the ellispoid in meters
+
+        Returns:
+            float: Semi minor acis of the ellispoid in meters
+        """
         return (1-self.f)*self.a
 
     @property
-    def e(self):
-        """Excentricity of the ellispoid"""
+    def e(self) -> float:
+        """Excentricity of the ellispoid
+
+        Returns:
+            float: Excentricity of the ellispoid
+        """
         return math.sqrt((self.a**2-self.b**2)/self.a**2)
 
     @property
-    def j2(self):
-        """Second gravitationla constant"""
+    def j2(self) -> float:
+        """Second gravitationla constant
+
+        Returns:
+            float: Second gravitationla constant
+        """
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
         return model_dict["j2"]
