@@ -33,24 +33,6 @@ _ListResults = namedtuple("_ListResults", (
     "results"
 ))
 
-# class _listError(ImmutableClass):
-#     """ PRIVATE CLASS - used to handle the detected error"""
-#     def __init__(self,
-#                  criteria_title: str,
-#                  criteria_value: str,
-#                  detected_errors: str):
-
-#         self.criteria_title = str(criteria_title)
-#         self.criteria_value = str(criteria_value)
-#         self.detected_errors = str(detected_errors)
-#         super().__init__()
-
-#     def toList(self) -> List:
-#         return [
-#             self.criteria_title,
-#             self.criteria_value,
-#             self.detected_errors]
-
 
 class CodeMetric(ABC):
     """ABSTRACT METHOD FOR CODE METRICS"""

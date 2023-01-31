@@ -1,126 +1,53 @@
-"""
-------------------- TOOLS FOR DEVELOPMENT -------------------
-"""
-
-
-# IMPORT MODULES
+from abc import ABC, abstractmethod, abstractproperty
+from typing import List, Any
 import os
-import ast
 from collections import namedtuple
-from typing import List
 
-from .utils import ImmutableClass
 
 from radon.visitors import ComplexityVisitor
-
 import radon.complexity
 import radon.metrics
 import radon.raw
-
 import hashlib
+import ast
 import datetime
+from rich.console import Console
+from rich.style import Style
+from rich.table import Table
+
 
 from prettytable import PrettyTable
 
-from rich.console import Console
-from rich.style import Style
+from .utils import ImmutableClass
+from .constant import LINE_SIZE
 
-# Exported items
-__all__ = ["FileAnalysis", "FolderAnalysis"]
+# GLOBAL NAMEDTUPLE
+_ListError = namedtuple("_ListError", (
+    "criteria_title",
+    "criteria_value",
+    "detected_errors"
+))
+_ListResults = namedtuple("_ListResults", (
+    "criteria_title",
+    "criteria_value",
+    "results"
+))
 
-
-# NAMED TUPLE DEFINITION
-
-ComplexityMetrics = namedtuple("CodeMetrics",
-                               ["name", "complexity",
-                                "complexityLetter", "is_method",
-                                "class_name", "startLine"])
-
-LineMetric = namedtuple("LineMetric",
-                        ["nbLines", "nbLineSource",
-                         "nbBlankLine", "nbCommentLines",
-                         "nbMultiCommentLines"])
-
-FolderResult = namedtuple("FolderResult",
-                          ["filePath",
-                           "stringInfo",
-                           "isValid",
-                           "validStatus"])
-
+__all__ =[
+    "FileAnalysis",
+    "FolderAnalysis"
+]
 
 # -------------------------------------------------------------------
-#                          CLASS CODE METRICS
+#                       CRITERIA CLASSES
 # -------------------------------------------------------------------
 
-
-class CodeMetrics():
-    """PRIVATE CLASS USED FOR FILE AND FOLDER ANALYSIS"""
-    _MAX_COMPLEXITY_LETTER = "B"
-    _MAX_MAINTENANCE_LETTER = "A"
-    _MIN_COMMENT_RATIO = 30
+class CodeMetric(ABC):
+    """ABSTRACT METHOD FOR CODE METRICS"""
     _VALID_LETTERS = ["A", "B", "C", "D", "E"]
     _VALID_RANGE = {"min": 0, "max": 100}
 
-    def chk_complexity(self, value2test):
-        # Valid IO
-        CodeMetrics._verifyLetter(value2test, self._VALID_LETTERS)
-        # assess
-        return value2test <= self._MAX_COMPLEXITY_LETTER
-
-    def chk_maintenance(self, value2test):
-        # Valid IO
-        CodeMetrics._verifyLetter(value2test, self._VALID_LETTERS)
-        # assess
-        return value2test <= self._MAX_MAINTENANCE_LETTER
-
-    def chk_comments(self, value2test):
-        # Valid IO
-        CodeMetrics._verifyRange(value2test, self._VALID_RANGE)
-        # assess
-        return value2test >= self._MIN_COMMENT_RATIO
-
-    @staticmethod
-    def _verifyLetter(item2check, validList):
-        assert isinstance(item2check, (str)), "the Value shall be a string"
-        if item2check not in validList:
-            msg = ("The Letter is not in the authorized list ",
-                   f"({validList}) "
-                   f"Current :{item2check}")
-            raise ValueError(msg)
-        pass
-
-    @staticmethod
-    def _verifyRange(item2check, validRange) -> None:
-
-        assert isinstance(item2check,
-                          (int, float)), "the Value shall be an int"
-
-        if (item2check < validRange['min'] or
-           item2check > validRange['max']):
-            msg = ("The value is not in the valid range "
-                   f"ie. [{validRange['min']},{validRange['max']}]")
-            raise ValueError(msg)
-
-        pass
-
-# -------------------------------------------------------------------
-#                          CLASS FILE ANALYSIS
-# -------------------------------------------------------------------
-
-
-class FileAnalysis(CodeMetrics):
-
-    # ---------- CREATOR -------------
-
     def __init__(self, filePath: str) -> None:
-        """Create a FileAnalysis object based on a filePath
-
-        Args:
-            filePath (str): path of the file to analyze (absolute or relative)
-
-        Raises:
-            ValueError: if the file path is not a string or an existing file
-        """
         # check if filepath is a existing file
         if not (os.path.isfile(filePath)):
             msg = f"{filePath} is not a valid path"
@@ -130,63 +57,479 @@ class FileAnalysis(CodeMetrics):
             raise ValueError(msg)
         self.filePath = os.path.abspath(filePath)
 
-        # initalisation with super class
-        super().__init__()
+    @property
+    def data(self) -> str:
+        """read the data of the Python file
 
-    def __str__(self) -> str:
-        """Overload the print method"""
-        # Create table for complexity
-        CI = self.complexity
+        Returns:
+            str : all data of the Python file
+        """
+        with open(self.filePath, 'r') as file:
+            data = file.read()
+        return data
+
+    @abstractproperty
+    def title(self) -> str:
+        pass
+
+    @abstractproperty
+    def definition(self) -> str:
+        pass
+
+    @abstractproperty
+    def criteria_value(self) -> Any:
+        pass
+
+    @abstractmethod
+    def isValid(self) -> bool:
+        pass
+
+    @abstractmethod
+    def toString(self) -> str:
+        pass
+
+    @abstractmethod
+    def calculateCriteria(self) -> Any:
+        pass
+
+    @abstractmethod
+    def exportErrors(self) -> _ListError:
+        pass
+
+    @abstractmethod
+    def exportCriteria(self) -> _ListResults:
+        pass
+
+    def setCriteria(self, criteria) -> None:
+        """ Change criteria Value"""
+        self.criteria_value = criteria
+        return self
+
+    @staticmethod
+    def _verifyLetter(item2check, validList):
+        if not isinstance(item2check, (str)):
+            raise TypeError("the Value shall be a string")
+
+        if item2check not in validList:
+            msg = ("The Letter is not in the authorized list ",
+                   f"({validList}) "
+                   f"Current :{item2check}")
+            raise ValueError(msg)
+        return item2check
+
+    @staticmethod
+    def _verifyRange(item2check, validRange) -> None:
+        """ PRIVATE METHOD used to check if an item is a
+        float or int and in the appropriate range"""
+
+        if not isinstance(item2check,
+                          (int, float)):
+            raise TypeError("the Value shall be an int or float")
+
+        if (item2check < validRange['min'] or
+           item2check > validRange['max']):
+            msg = ("The value is not in the valid range "
+                   f"ie. [{validRange['min']},{validRange['max']}]")
+            raise ValueError(msg)
+
+        return item2check
+
+
+class CyclomaticComplexity(CodeMetric):
+    """Implement the Cyclomatic Complexity assessment of one python file"""
+    title = "Cyclomatic Complexity"
+    definition = ("All functions, Class, methods and properties"
+                  "implemented in the file shall have a maximum"
+                  " cyclomatic complexity.")
+    criteria_value = "B"
+
+    def __init__(self, filePath: str) -> None:
+        super().__init__(filePath)
+
+    def isValid(self) -> bool:
+        """check if the file is valid against cyclomatic complexity
+
+        Returns:
+            bool: boolean that provide
+             the valid status against cyclomatic complexity
+        """
+
+        # assess the criteria value
+        criteria = self._verifyLetter(self.criteria_value,
+                                      self._VALID_LETTERS)
+
+        # get the result for all methods and functions
+        res = self.calculateCriteria()
+
+        invalidElements = [item for item in res
+                           if not (self._isValidCommplexity(
+                                    item.complexityLetter,
+                                    criteria))
+                           ]
+        return len(invalidElements) == 0
+
+    @staticmethod
+    def _isValidCommplexity(complexityValue: str,
+                            criteria: str) -> bool:
+        """PRIVATE METHOD - Compare two letters for complexity
+
+        Args:
+            complexityValue (str): value to assess
+            criteria (str): complexity obkective
+
+        Returns:
+            bool: _description_
+        """
+
+        return complexityValue <= criteria
+
+    def toString(self) -> str:
+        """Export the result of file analysis as an ascii string
+
+        Returns:
+            str: file analysis result
+        """
+
+        # get the result for all methods and functions
+        res = self.calculateCriteria()
+
         my_tableCI = PrettyTable()
         my_tableCI.field_names = ["Item Name", "Class",
                                   "Complexity Letter", "Line"]
-        for item in CI:
+        for item in res:
             my_tableCI.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
 
-        # create a table for validation status
-        my_tableST = PrettyTable()
-        validationStatus = self.getValidationStatus()
-        my_tableST.field_names = ["Criteria", "Status"]
+        return str(my_tableCI)
 
-        for item in validationStatus._fields:
-            my_tableST.add_row([item, getattr(validationStatus, item)])
+    def calculateCriteria(self) -> List[namedtuple]:
+        """Calculate the complexity of all methods and functions of the file
 
-        # Create Message
-        msg = (
-            "File Description :\n".upper() +
-            f"\t- File:              {self.fileName}\n" +
-            f"\t- Path:              {self.fileFolder}\n" +
-            f"\t- Last Modifcation:  {self.lastModificationDate}\n" +
-            f"\t- CheckSum MD5:      {self.checksum_MD5}\n" +
-            f"\t- SHA256:            {self.sha256}\n" +
-            "\n" +
-            "File Validation Criterias:\n".upper() +
-            f"\t- Max Complexity:       {self._MAX_COMPLEXITY_LETTER}\n" +
-            f"\t- Max Maintenance:      {self._MAX_MAINTENANCE_LETTER}\n" +
-            f"\t- Min Comment Ration:   {self._MIN_COMMENT_RATIO} %\n" +
-            "\n" +
-            f"{my_tableST}\n" +
-            "\n" +
-            "File Metrics :\n".upper() +
-            f"\t- Maintenability:    {self.maintenanceLetter} ({self.maintenanceIndex})\n" +  # noqa: E501
-            f"\t- Coment Percentage: {self.commentsPercentage} %\n" +
-            "\t- Complexity:\n" +
-            "\n"
+        Returns:
+            List[namedtuple]: complexity analysis
+        """
+        # read file :
+        data = self.data
+
+        # calculate all metrics for all functions and methods
+        # in the python file
+        evaluation = ComplexityVisitor.from_code(data)
+
+        # initiate
+        result = []
+
+        # function
+        result.extend(self._collectInfo(evaluation.functions, self.filePath))
+
+        # Class
+        list_classes = evaluation.classes
+        for classItem in list_classes:
+            result.extend(self._collectInfo(classItem.methods, self.filePath))
+
+        # clean result of empty lists
+        while [] in result:
+            result.remove([])
+
+        return result
+
+    def exportErrors(self) -> _ListError:
+        """ Export the Error list"""
+
+        # initiate message
+        msg = ""
+
+        # get result
+        results = self.calculateCriteria()
+
+        # feed message
+        for result in results:
+            if not self._isValidCommplexity(
+                result.complexityLetter,
+                self.criteria_value
+                 ):
+
+                if result.is_method:
+                    itemName = f"{result.class_name}.{result.name} "
+                else:
+                    itemName = f"{result.name}"
+
+                msg += (f"{itemName} " +
+                        f"(L{result.startLine})" +
+                        f" - {result.complexityLetter} ({result.complexity})" +
+                        "\n"
+                        )
+
+        obj = _ListError(
+            criteria_title=self.title,
+            criteria_value="Max " + str(self.criteria_value),
+            detected_errors=msg
         )
-        return msg + str(my_tableCI)
 
-    # -------------------- FILE PROPERTIES ----------------------------
+        return obj
+
+    def exportCriteria(self) -> _ListResults:
+        """Export the result of the assessment as _ListResult named tuple
+
+        Returns:
+            _ListResults: result of the assessment
+        """
+        # get result
+        results = self.calculateCriteria()
+
+        # get maximum value
+        complexityValues = [result.complexity for result in results]
+        complexityLetters = [result.complexityLetter for result in results]
+
+        maxComplexity = max(complexityValues)
+        maxComplexityLetter = max(complexityLetters)
+
+        msg = f"Max {maxComplexityLetter} ({maxComplexity})"
+
+        # create object
+        obj = _ListResults(
+            criteria_title=self.title,
+            criteria_value="Max " + str(self.criteria_value),
+            results=msg
+        )
+
+        return obj
+
+    @staticmethod
+    def _collectInfo(items, pythonFile):
+        """PRIVATE FUNCTION - use to collect Cyclomatic complexity
+
+        Args:
+            items (list): list of complexity result
+            pythonFile (string): path of the file
+
+        Returns:
+            list : list of namedtuples
+        """
+
+        ComplexityMetrics = namedtuple("CodeMetrics",
+                                       [
+                                        "name",
+                                        "complexity",
+                                        "complexityLetter",
+                                        "is_method",
+                                        "class_name",
+                                        "startLine"
+                                        ])
+
+        info = []
+        for item in items:
+            info.append(ComplexityMetrics(
+                        name=item.name,
+                        complexity=item.complexity,
+                        complexityLetter=radon.complexity.cc_rank(item.complexity),  # noqa: E501
+                        is_method=item.is_method,
+                        class_name=item.classname,
+                        startLine=item.lineno))
+        return info
+
+
+class CommentRatio(CodeMetric):
+    title = "Comment Ratio (%)"
+    definition = ("The content of the Python file shall have a minimum"
+                  " percentage of comments excluding the blank lines")
+    criteria_value = 30
+
+    def __init__(self, filePath: str) -> None:
+        super().__init__(filePath)
+
+    def calculateCriteria(self) -> float:
+        "Calculate the Comment percentage of the file as a float"
+
+        # get data
+        data = self.data
+
+        # get the analysis of the data
+        loc_metric = radon.raw.analyze(data)
+
+        # calculate the effective metrics
+        effectiveLines = (loc_metric.comments +
+                          loc_metric.multi +
+                          loc_metric.sloc)
+        commentsLines = (loc_metric.comments + loc_metric.multi)
+
+        return round(100 * (commentsLines / effectiveLines), 1)
+
+    def isValid(self) -> bool:
+        """check if the file is valid against comment ratio
+
+        Returns:
+            bool: boolean that provide
+             the valid status against cyclomatic complexity
+        """
+
+        # assess the criteria value
+        criteria = self._verifyRange(self.criteria_value,
+                                     self._VALID_RANGE)
+
+        # get the result for all methods and functions
+        res = self.calculateCriteria()
+
+        return res >= criteria
+
+    def toString(self):
+        return f"Comment Ratio : {self.calculateCriteria()} %"
+
+    def exportErrors(self) -> _ListError:
+        """ Export the Error list"""
+
+        # get result
+        result = self.calculateCriteria()
+
+        obj = _ListError(
+            criteria_title=self.title,
+            criteria_value="Min " + str(self.criteria_value) + " %",
+            detected_errors=str(result) + " %"
+        )
+
+        return obj
+
+    def exportCriteria(self) -> _ListResults:
+        """Export the result of the assessment as _ListResult named tuple
+
+        Returns:
+            _ListResults: result of the assessment
+        """
+        # get result
+        result = self.calculateCriteria()
+
+        # create object
+        obj = _ListResults(
+            criteria_title=self.title,
+            criteria_value="Min " + str(self.criteria_value) + " %",
+            results=str(result) + " %"
+        )
+
+        return obj
+
+
+class Maintenability(CodeMetric):
+    """
+    Maintenability Critéria
+
+    see : https://radon.readthedocs.io/en/latest/intro.html#maintainability-index # noqa: E501
+    """
+    title = "Maintenability"
+    definition = ("The content of the Python file shall have a maximum"
+                  " level of Maintenability")
+    criteria_value = "A"
+
+    def __init__(self, filePath: str) -> None:
+        super().__init__(filePath)
+
+    def calculateCriteria(self) -> float:
+        "Calculate maintenability as Letter"
+        # get data
+        data = self.data
+
+        # get the analysis of the data
+        maintenanceIndex = round(radon.metrics.mi_visit(data, multi=True), 1)
+
+        return radon.metrics.mi_rank(maintenanceIndex)
+
+    def isValid(self) -> bool:
+        """check if the file is valid against comment ratio
+
+        Returns:
+            bool: boolean that provide
+             the valid status against cyclomatic complexity
+        """
+
+        # assess the criteria value
+        criteria = self._verifyLetter(self.criteria_value,
+                                      self._VALID_LETTERS)
+
+        # get the result for all methods and functions
+        res = self.calculateCriteria()
+
+        return res <= criteria
+
+    def toString(self):
+        return f"Maintenance Letter : {self.calculateCriteria()}"
+
+    def exportErrors(self) -> _ListError:
+        """ Export the Errors list"""
+
+        # get result
+        result = self.calculateCriteria()
+
+        obj = _ListError(
+            criteria_title=self.title,
+            criteria_value="Max " + str(self.criteria_value),
+            detected_errors=str(result)
+        )
+        return obj
+
+    def exportCriteria(self) -> _ListResults:
+        """Export the result of the assessment as _ListResult named tuple
+
+        Returns:
+            _ListResults: result of the assessment
+        """
+        # get result
+        result = self.calculateCriteria()
+
+        # create object
+        obj = _ListResults(
+            criteria_title=self.title,
+            criteria_value="Max " + str(self.criteria_value),
+            results=str(result)
+        )
+
+        return obj
+
+# -------------------------------------------------------------------
+#                       FILE ANALYSIS
+# -------------------------------------------------------------------
+
+class FileAnalysis():
+
+    # ---------- CREATOR -------------
+
+    def __init__(self, filePath: str,
+                 maxComplexityLetter: str = "B",
+                 maxMaintenanceLetter: str = "A",
+                 minCommentRatio: float = 30,
+                 ) -> None:
+        """_summary_
+
+        Args:
+            filePath (str): file path (absolute or relative)
+            maxComplexityLetter (str, optional): maximum Complexity Letter
+                . Defaults to "B".
+            maxMaintenanceLetter (str, optional): maximum Maintenace Letter
+                . Defaults to "A".
+            minCommentRatio (float, optional): minimum comment ratio
+                . Defaults to 30.
+        """
+
+        # create data
+        self._data = [
+            Maintenability(filePath).setCriteria(maxMaintenanceLetter),
+            CommentRatio(filePath).setCriteria(minCommentRatio),
+            CyclomaticComplexity(filePath).setCriteria(maxComplexityLetter),
+         ]
+
+        # set file path (already checked)
+        self.filepath = self.filePath = os.path.abspath(filePath)
+
+        pass
+
+# -------------------- FILE PROPERTIES ----------------------------
 
     @property
     def fileName(self) -> str:
         """File name with its extension"""
-        dir, fileName = os.path.split(self.filePath)
+        _, fileName = os.path.split(self.filePath)
         return fileName
 
     @property
     def fileFolder(self):
         """path of the folder of the analyzed file"""
-        dir, file = os.path.split(self.filePath)
+        dir, _ = os.path.split(self.filePath)
         return dir
 
     @property
@@ -236,105 +579,111 @@ class FileAnalysis(CodeMetrics):
             tree = ast.parse(f.read())
         return sum(isinstance(exp, ast.FunctionDef) for exp in tree.body)
 
-    # -------------- CODE METRICS -----------------
-
     @property
-    def complexity(self) -> List[namedtuple]:
-        """Complexity as namedtuple with associated information"""
-
-        # read file :
-        data = self._readFile()
-
-        # calculate all metrics for all functions and methods
-        # in the python file
-        evaluation = ComplexityVisitor.from_code(data)
-
-        # initiate
-        result = []
-
-        # function
-        result.extend(self._collectInfo(evaluation.functions, self.filePath))
-
-        # Class
-        list_classes = evaluation.classes
-        for classItem in list_classes:
-            result.extend(self._collectInfo(classItem.methods, self.filePath))
-
-        # clean result of empty lists
-        while [] in result:
-            result.remove([])
-
-        return result
-
-    @property
-    def maintenanceIndex(self) -> float:
-        """provide the maintenance index
-
-        see : https://radon.readthedocs.io/en/latest/intro.html#maintainability-index # noqa: E501
-
-        Returns:
-            float: _description_
-        """
-        data = self._readFile()
-
-        return round(radon.metrics.mi_visit(data, multi=True), 1)
-
-    @property
-    def maintenanceLetter(self) -> str:
-        """Provide de maintenance letter (eg. A= Good, E = Bad)
-
-        Returns:
-            str: maintenance letter (A to E)
-        """
-        return radon.metrics.mi_rank(self.maintenanceIndex)
-
-    @property
-    def lineMetrics(self) -> namedtuple:
-        """Line of code metric including comment multiline
-         comment line, blanck line and source code line"""
-
-        loc_metric = radon.raw.analyze(self._readFile())
-
-        return LineMetric(
-            nbLines=loc_metric.loc,
-            nbLineSource=loc_metric.sloc,
-            nbBlankLine=loc_metric.blank,
-            nbCommentLines=loc_metric.comments,
-            nbMultiCommentLines=loc_metric.multi,
-            )
-
-    @property
-    def nbLines(self) -> int:
-        """number of lines in the file
+    def numberOfLines(self) -> int:
+        """Number of lines (without blank line) of the file
 
         Returns:
             int: number of lines
         """
+        nloc = 0
+        with open(self.filePath) as fp:
+            for line in fp:
+                if line.strip():
+                    nloc += 1
 
-        # get the line metrics
-        metrics = self.lineMetrics
+        return nloc
 
-        return metrics.nbLines
+    # -------------------- ANALYSIS --------------------
 
-    @property
-    def commentsPercentage(self) -> float:
-        """Provide the percentage of comments
+    def getValidationStatus(self) -> dict:
+        """Calculate the validation status for
+        the analyzed file against all criterias
 
         Returns:
-            float: percentage of comments line per effective lines
-                    (blank lines are removed)
+            dict: dictionary with all criteria with a boolean
+                (True: pass, False: fail)
         """
 
-        # get the line metrics
-        metrics = self.lineMetrics
+        # get data
+        datas = self._data
 
-        # calculate the effective metrics
-        effectiveLines = (metrics.nbCommentLines +
-                          metrics.nbMultiCommentLines +
-                          metrics.nbLineSource)
-        commentsLines = (metrics.nbCommentLines + metrics.nbMultiCommentLines)
+        # initiate the output
+        output = {}
 
-        return round(100 * (commentsLines / effectiveLines), 1)
+        for data in datas:
+            output[data.title] = data.isValid()
+
+        return output
+
+    def isValid(self) -> bool:
+        """check if a file is valid against all criterias"
+
+        Returns:
+            bool: True if Ok else False
+        """
+
+        # get results
+        res = self.getValidationStatus()
+
+        return all(list(res.values()))
+
+    # ------------------ EXPORT TO STRING -------------------------
+
+    def exportToString(self) -> str:
+
+        # get data
+        datas = self._data
+
+        # initiate the outputs
+        msgDetails = ""
+
+        my_tableResult = PrettyTable()
+        my_tableResult.field_names = ["Criteria",
+                                      "Expected Value",
+                                      "Assessment"]
+
+        for data in datas:
+
+            # get result
+            crit = data.exportCriteria()
+
+            # Complete the result table
+            my_tableResult.add_row([
+                crit.criteria_title,
+                crit.criteria_value,
+                crit.results
+            ])
+
+            msgDetails += (">>> " + data.title +
+                           "\n" + data.toString() + "\n\n")
+
+        msg = (
+            "File Description :\n".upper() +
+            f"\t- File:              {self.fileName}\n" +
+            f"\t- Path:              {self.fileFolder}\n" +
+            f"\t- Last Modifcation:  {self.lastModificationDate}\n" +
+            f"\t- CheckSum MD5:      {self.checksum_MD5}\n" +
+            f"\t- SHA256:            {self.sha256}\n" +
+            f"\t- Number of lines:   {self.numberOfLines}\n"
+            "\n" +
+            "File Assessment:\n".upper() +
+            f"{my_tableResult}"
+            "\n" +
+            "File Metrics :\n".upper() +
+            f"{msgDetails}"
+        )
+
+        return msg
+
+    def exportErrors(self) -> List[_ListError]:
+        """Export the detected errors as a list"""
+
+        ListErrors = []
+        for data in self._data:
+            if not data.isValid():
+                ListErrors.append(data.exportErrors())
+        return ListErrors
 
     # ---------------------- UTILS -----------------------
 
@@ -347,112 +696,6 @@ class FileAnalysis(CodeMetrics):
         with open(self.filePath, 'r') as file:
             data = file.read()
         return data
-
-    def getValidationStatus(self) -> namedtuple:
-
-        ValidationStatus = namedtuple("ValidationStatus", (
-            "maintenance",
-            "complexity",
-            "commentRatio"
-        ))
-
-        return ValidationStatus(
-            maintenance=self.chk_maintenance(self.maintenanceLetter),  # noqa: E501
-            commentRatio=self.chk_comments(self.commentsPercentage),
-            complexity=self.getInvalidItems() == []
-        )
-
-    def isValid(self) -> bool:
-        """Check if a file is ok against code metrics
-
-        Args:
-
-        Returns:
-            bool: code metrics assessment as boolean
-        """
-
-        validationStatus = self.getValidationStatus()
-
-        # Evaluate code metrics
-        chk = all([value
-                  for value in validationStatus])
-        return chk
-
-    def getInvalidItems(self,
-                        ) -> List[namedtuple]:  # noqa: E501
-        """Provide the list of functions or methods with inappropriate
-        complexity
-
-        Args:
-
-        Returns:
-            List: List of namedtuple of the function with inappropriate
-            complexity
-        """
-
-        # calculate complexity index
-        CI = self.complexity
-
-        invalidElement = [item for item in CI
-                          if not self.chk_complexity(item.complexityLetter)]   # noqa: E501
-        return invalidElement
-
-    def getNumberInvalidItems(self,
-                              ) -> int:
-        """Provide the number of Invalid Items
-
-        Returns:
-            int: _description_
-        """
-        return len(self.getInvalidItems())
-
-    def getListInvalidItems(self,
-                            ) -> List[str]:
-        """Provide the list of Invalid items (functions and Class method)
-        that violate the complexity rules
-
-        Args:
-
-        Returns:
-            List[str]: list of Items a list of string with line number
-        """
-
-        res = []
-        for item in self.getInvalidItems():
-            if item.is_method:
-                res.append(item.class_name +
-                           "." +
-                           item.name +
-                           f" (L{item.startLine})" +
-                           f" - {item.complexityLetter} ({item.complexity})")
-            else:
-                res.append(item.name +
-                           f" (L{item.startLine})" +
-                           f" - {item.complexityLetter} ({item.complexity})")
-        return res
-
-    @staticmethod
-    def _collectInfo(items, pythonFile):
-        """PRIVATE FUNCTION - use to collect Cycloamtic complexity
-
-        Args:
-            items (list): list of complexity result
-            pythonFile (string): path of the file
-
-        Returns:
-            list : list of namedtuples
-        """
-        info = []
-        for item in items:
-            info.append(ComplexityMetrics(
-                        name=item.name,
-                        complexity=item.complexity,
-                        complexityLetter=radon.complexity.cc_rank(item.complexity),  # noqa: E501
-                        is_method=item.is_method,
-                        class_name=item.classname,
-                        startLine=item.lineno))
-        return info
-
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
@@ -492,44 +735,78 @@ class FolderAnalysis(ImmutableClass):
             str: string with the folder analysis outputs
         """
 
+        # Create header
+        header_msg = (
+            "#"*LINE_SIZE + "\n" +
+            "             CODE METRICS ANALYSIS\n" +
+            "#"*LINE_SIZE + "\n" +
+            "\n" +
+            "Folder Description :\n".upper() +
+            f"\t- folder:{self.folderPath}\n" +
+            "\n"
+        )
+
+        # initiate detailled message
+        detailledAnalysis = ""
+
         # create a table for validation status
         my_tableST = PrettyTable()
+        my_tableError = PrettyTable()
         results = self._results
 
         # fields = results[0].validStatus._fields
         # print(fields)
         my_tableST.field_names = (["file Name"] +
-                                  list(results[0].validStatus._fields))
+                                  list(results[0].validStatus.keys()))
 
-        # create detailled paragraph and global table with status per file
-        detailledAnalysis = ""
+        columnTitles = [
+                    "File Name",
+                    "Error Type",
+                    "Expected Criteria",
+                    "Error"
+                ]
+        my_tableError.field_names = columnTitles
+
+        # Loop over result
         for result in results:
-            status = [result.filePath] + [getattr(result.validStatus, item)
+            status = [result.filePath] + [result.validStatus[item]
                                           for item in
-                                          result.validStatus._fields]
-            my_tableST.add_row(status)
-            detailledAnalysis += ("\n>>> " + result.filePath.upper() +
-                                  "\n" + result.stringInfo + "\n")
+                                          list(result.validStatus.keys())]
 
-        msg = (
-            "#####################################################\n" +
-            "             CODE METRICS ANALYSIS\n" +
-            "#####################################################\n" +
-            "\n" +
-            "Folder Description :\n".upper() +
-            f"\t- folder:            {self.folderPath}\n" +
-            "\n" +
-            "Status :\n".upper() +
-            f"{my_tableST}\n" +
-            "\n" +
-            "------------------------------------------------------\n" +
-            "              Detailled Analysis\n".upper() +
-            "------------------------------------------------------\n" +
-            detailledAnalysis
-        )
+            # feed status
+            my_tableST.add_row(status)
+
+            # feed error
+            if not result.isValid:
+                for error in result.errorOutputs["errors"]:
+                    my_tableError.add_row([
+                            result.errorOutputs["relative Path"],
+                            error.criteria_title,
+                            error.criteria_value,
+                            error.detected_errors
+                                    ]
+                            )
+
+            # collect detailled analysis
+            detailledAnalysis += (
+                "-"*LINE_SIZE + "\n" +
+                ">>> " + result.filePath.upper() + "\n" +
+                result.stringInfo + "\n"
+            )
+            # create the global msg
+            msg = (
+                header_msg +
+                ">>> RESULTS :\n" +
+                f"{my_tableST}\n" +
+                ">>> ERRORS :\n" +
+                f"{my_tableError}\n" +
+                "\n" +
+                "@"*LINE_SIZE + "\n\n" +
+                detailledAnalysis
+                )
         return msg
 
-    # -------------------- PROPERTY ------------------------
+    # -------------------- PROPERTIES ------------------------
 
     @property
     def listFiles(self) -> List[str]:
@@ -558,43 +835,110 @@ class FolderAnalysis(ImmutableClass):
             List: list of namedtuple
         """
 
-        # initiate results list
+        # initiate results list and error list
         list_results = []
+        list_errors = []
+
+        # initiate the results namedtuple
+        FolderResult = namedtuple("FolderResult", [
+                          "filePath",
+                          "stringInfo",
+                          "isValid",
+                          "validStatus",
+                          "errorOutputs",
+                          ])
 
         # initiate Console Output
         console = Console()
 
         # console output
         console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
+                     characters="=",
                      style=Style(color="cyan"))
         console.print("[bold]Platform :")
-        console.print(f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]")
-        console.print(f"[bold]Number of Elements :  {len(self.listFiles)}")
-
+        console.print(f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]")  # noqa: E501
+        console.print(f"[bold]Number of Elements :  {len(self.listFiles)}\n")
 
         for filePath in self.listFiles:
 
-            obj = FileAnalysis(filePath)
-            # apply the settings
-            obj._MAX_COMPLEXITY_LETTER = self.max_complexity_letter
-            obj._MAX_MAINTENANCE_LETTER = self.max_maintenance_letter
-            obj._MIN_COMMENT_RATIO = self.min_comment_ration
+            # get relative path
+            relPath = os.path.relpath(filePath, self.folderPath)
+
+            obj = FileAnalysis(filePath,
+                               maxComplexityLetter=self.max_complexity_letter,
+                               maxMaintenanceLetter=self.max_maintenance_letter,  # noqa: E501
+                               minCommentRatio=self.min_comment_ration
+                               )
 
             # collect info
-            print(f">>> Analysis of {obj.fileName}...")
+            console.print(f"[cyan]>>> Analysis of {relPath}...")
 
+            # get results
+            validationResult = obj.getValidationStatus()
 
+            # Collect errors
+            if not obj.isValid():
+                newError = {
+                    "relative Path": relPath,
+                    "errors": obj.exportErrors()
+                }
+                list_errors.append(newError)
+            else:
+                newError = None
 
-            newRes = FolderResult(filePath=os.path.relpath(filePath,
-                                                           self.folderPath),
-                                  stringInfo=str(obj),
-                                  isValid=obj.isValid(),
-                                  validStatus=obj.getValidationStatus()
+            # Collect outputs for a file
+            newRes = FolderResult(filePath=relPath,
+                                  stringInfo=obj.exportToString(),
+                                  isValid=all(list(validationResult.values())),
+                                  validStatus=validationResult,
+                                  errorOutputs=newError
                                   )
+
             list_results.append(newRes)
 
             # console output
+            console.print(newRes.validStatus)
 
+        # final consol output
+        nbFalse = [item.isValid for item in list_results].count(False)
+
+        if nbFalse == 0:
+            # No Error detected
+            console.rule(title=f"[bold green]{len(self.listFiles)} files OK",
+                         characters="=",
+                         style=Style(color="green"))
+        else:
+            # Errors detected
+            # initiate table
+            table = Table(title="Detailled Errors")
+
+            # get the list of Column for the table
+            # extend with the last result dict fields
+            columnTitles = [
+                "File Name",
+                "Error Type",
+                "Expected Criteria",
+                "Error"
+            ]
+            # create columns
+            for name in columnTitles:
+                table.add_column(name, style="cyan")
+
+            # feed with information
+            for fileErrors in list_errors:
+                # get the dictionaries of one file
+                for error in fileErrors["errors"]:
+                    table.add_row(
+                        fileErrors["relative Path"],
+                        error.criteria_title,
+                        error.criteria_value,
+                        error.detected_errors
+                                )
+            console.print(table)
+            msg = f"[bold red]{nbFalse} erros over {len(self.listFiles)} files"
+            console.rule(title=msg,
+                         characters="=",
+                         style=Style(color="red"))
         return list_results
 
     def isValid(self,
