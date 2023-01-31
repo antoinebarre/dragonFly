@@ -37,6 +37,7 @@ class EarthModel():
 
     @model.setter
     def model(self, value):
+        """ Check the setter for the model"""
         try:
             value = value.upper()
         except Exception:
@@ -62,7 +63,7 @@ class EarthModel():
 
     @property
     def f(self):
-        "flattening of the ellispoid"
+        """flattening of the ellispoid"""
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
         return model_dict["flattening"]
@@ -79,7 +80,12 @@ class EarthModel():
 
     @property
     def j2(self):
-        "Second gravitationla constant"
+        """Second gravitationla constant"""
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
         return model_dict["j2"]
+
+# ----------------------  VISUAL FRAMEWORK  -------------------
+
+
+LINE_SIZE = 78
