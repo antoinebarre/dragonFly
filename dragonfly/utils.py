@@ -79,6 +79,26 @@ def __fundamentalRotation(axis: np.ndarray, theta) -> np.ndarray:
         raise ValueError('The angle shall be a number')
 
 
+def skew_matrix(vect: np.ndarray) -> np.ndarray:
+    """provide the skew symetrical matric of a vector
+
+    Args:
+        vect (np.ndarray): column vector [3x1]
+
+    Returns:
+        np.ndarray: skew symetrical matric of a vector
+    """
+
+    # get input
+    vect = __input_check_3x1(vect)
+
+    # create matrix
+    M = np.array([[0, -vect[2, 0], vect[1, 0]],
+                  [vect[2, 0], 0, -vect[0, 0]],
+                  [-vect[1, 0], vect[0, 0], 0]])
+    return M
+
+
 """
 ---------------- INPUTS CHECKS ----------------
 """
