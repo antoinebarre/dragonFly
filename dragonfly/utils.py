@@ -8,6 +8,7 @@ collect all the utility fonction of dragonFly
 # import module
 import numpy as np
 from scipy.spatial.transform import Rotation
+from typing import Any, List, Tuple
 
 
 def _assertInstance(data_name: str, data, expected_Instance) -> None:
@@ -129,17 +130,104 @@ def __input_check_3x3(x_in):
         msg = __createErrorMessageData(msg, x_in)
         raise ValueError(msg)
 
-# ===============================  TOOLS  ====================================
+# ===============================  Error Message  ========================
 
 
 def __createErrorMessageData(errorMsg, value):
-    msg = f"{errorMsg}\n" + \
-        f"Current Value    : {value}\n" +\
-        f"Curent Data Type : {type(value)}"
+    msg = (f"{errorMsg}\n" +
+           f"Current Value    : {value}\n" +
+           f"Curent Data Type : {type(value)}"
+           )
     return msg
 
 
+def __createErrorMessage(errorMsg: str,
+                         expectedValue: str,
+                         realValue: str) -> str:
+    """PRIVATE - create a generic error message
+
+    Args:
+        errorMsg (str): description of the error
+        expectedValue (str): expected information
+        realValue (str): assessed information
+
+    Returns:
+        str: _description_
+    """
+    msg = (
+        f"{errorMsg}\n" +
+        f"Expected : {expectedValue}\n" +
+        f"Real:      {realValue}\n"
+    )
+    return msg
+
+# ===============================  FILE FOLDER =========================
+
+
+def __validateFile(filepath: str) -> str:
+    return "False"
+
+
+def __validateFileExtension(filepath: str, validExtension: list[str]) -> str:
+    return "False"
+
+
+def __validateFolder(filepath: str) -> str:
+    return "False"
+
+
+def __absolutePath(path: str) -> str:
+    return "toto"
+
+# ==================== DATA VALIDATION ===========================
+
+
+def __validateInstance(data: Any, instances: type | List[type] | Tuple[type], inheritance: bool = False) -> Any:
+
+    # Nested evaluation function
+    def evaluateType(data, listTypes, inheritance) -> bool:
+        if inheritance:
+            # with inheritance
+            return isinstance(data, listTypes)
+        else:
+            # inheritance is disable
+            return type(data) in listTypes
+            
+    # check the list of accepted types
+    if isinstance(instances, type):
+        listTypes = (instances,)  # force to have a one element tuple
+    elif (isinstance(instances, tuple) and
+          all(isinstance(elem, type) for elem in instances)):
+        listTypes = instances
+    else:
+        msg = "__validateInstance() arg 2 must be a type or a tuple of types"
+        msg = __createErrorMessage(
+            msg,
+            "type or tuple of types",
+            type(data)
+        )
+        raise ValueError(msg)
+
+    if evaluateType(data, listTypes, inheritance):
+        return data
+
+    # raise error
+    msg = ("The input shall respected the"
+           f" expected types (inheritance: {inheritance})")
+    msg = __createErrorMessage(msg, instances, type(data))
+    raise TypeError(msg)
+
+
+def __validateListInstances(dataList: List, instances) -> List:
+    return dataList
+
+
+def __validateTupleInstances(dataList: Tuple, instances) -> List:
+    return dataList
+
 # ===============================  PROTECTED CLASS  =========================
+
+
 class ImmutableClass:
     '''Freeze any class such that instantiated
     objects become immutable. Also use __slots__ for speed.
