@@ -182,7 +182,22 @@ def __absolutePath(path: str) -> str:
 # ==================== DATA VALIDATION ===========================
 
 
-def __validateInstance(data: Any, instances: type | List[type] | Tuple[type], inheritance: bool = False) -> Any:
+def __validateInstance(
+    data: Any,
+    instances: type | List[type] | Tuple[type],
+    inheritance: bool = False
+) -> Any:
+    """validate if a data as the appropriate type
+
+    Args:
+        data (Any): data to assess
+        instances (type | Tuple[type]): expected types
+        inheritance (bool, optional): inheritance activated
+            Defaults to False.
+
+    Returns:
+        Any: same object as data
+    """
 
     # Nested evaluation function
     def evaluateType(data, listTypes, inheritance) -> bool:
@@ -192,7 +207,7 @@ def __validateInstance(data: Any, instances: type | List[type] | Tuple[type], in
         else:
             # inheritance is disable
             return type(data) in listTypes
-            
+
     # check the list of accepted types
     if isinstance(instances, type):
         listTypes = (instances,)  # force to have a one element tuple
@@ -219,11 +234,12 @@ def __validateInstance(data: Any, instances: type | List[type] | Tuple[type], in
 
 
 def __validateListInstances(dataList: List, instances) -> List:
-    return dataList
+    raise NotImplementedError("To be done")
 
 
 def __validateTupleInstances(dataList: Tuple, instances) -> List:
-    return dataList
+    raise NotImplementedError("To be done")
+
 
 # ===============================  PROTECTED CLASS  =========================
 
