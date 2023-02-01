@@ -26,6 +26,10 @@ from prettytable import PrettyTable
 
 from .utils import ImmutableClass
 from .constant import LINE_SIZE
+from .utils import __validateFolder as validateFolder
+from .utils import __validateFile as validateFile
+from .utils import __validateFileExtension as validateFileExtension
+
 
 # GLOBAL NAMEDTUPLE
 _ListError = namedtuple("_ListError", (
@@ -61,14 +65,10 @@ class CodeMetric(ABC):
             filePath (str): file path (absolute or relative)
 
         """
-        # check if filepath is a existing file
-        if not (os.path.isfile(filePath)):
-            msg = f"{filePath} is not a valid path"
-            raise ValueError(msg)
-        elif not filePath.endswith(".py"):
-            msg = f"The file {filePath} is not a Python file (*.py)"
-            raise ValueError(msg)
-        self.filePath = os.path.abspath(filePath)
+        # check if filepath is a existing file and check extension
+        filePath = validateFile(filePath)
+        filePath = validateFileExtension(filePath, ".py")
+        self.filePath = filePath
 
     @property
     def data(self) -> str:
@@ -531,7 +531,7 @@ class FileAnalysis():
          ]
 
         # set file path (already checked)
-        self.filepath = self.filePath = os.path.abspath(filePath)
+        self.filePath = os.path.abspath(filePath)
 
         pass
 
@@ -737,10 +737,7 @@ class FolderAnalysis(ImmutableClass):
                  Defaults to 30.
         """
 
-        if not (os.path.isdir(folderPath)):
-            msg = f"{folderPath} is not a valid folder path"
-            raise ValueError(msg)
-        self.folderPath = os.path.abspath(folderPath)
+        self.folderPath = validateFolder(folderPath)
 
         # settings :
         self.max_complexity_letter = max_complexity_letter

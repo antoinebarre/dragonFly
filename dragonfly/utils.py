@@ -7,7 +7,18 @@ collect all the utility fonction of dragonFly
 
 # import module
 import numpy as np
+import os
 from scipy.spatial.transform import Rotation
+from typing import Any, List, Tuple
+import pathlib
+
+
+# EXCEPTION CREATOR
+
+
+class InvalidFileExtension(Exception):
+    "Raised when the file path has not the appropriate extension"
+    pass
 
 
 def _assertInstance(data_name: str, data, expected_Instance) -> None:
@@ -129,17 +140,244 @@ def __input_check_3x3(x_in):
         msg = __createErrorMessageData(msg, x_in)
         raise ValueError(msg)
 
-# ===============================  TOOLS  ====================================
+# ===============================  Error Message  ========================
 
 
 def __createErrorMessageData(errorMsg, value):
-    msg = f"{errorMsg}\n" + \
-        f"Current Value    : {value}\n" +\
-        f"Curent Data Type : {type(value)}"
+    msg = (f"{errorMsg}\n" +
+           f"Current Value    : {value}\n" +
+           f"Curent Data Type : {type(value)}"
+           )
     return msg
 
 
+def __createErrorMessage(errorMsg: str,
+                         expectedValue: str,
+                         realValue: str) -> str:
+    """PRIVATE - create a generic error message
+
+    Args:
+        errorMsg (str): description of the error
+        expectedValue (str): expected information
+        realValue (str): assessed information
+
+    Returns:
+        str: _description_
+    """
+    msg = (
+        f"{errorMsg}\n" +
+        f"Expected : {expectedValue}\n" +
+        f"Current :  {realValue}\n"
+    )
+    return msg
+
+# ===============================  FILE FOLDER =========================
+
+
+def __validateFile(filepath: str) -> str:
+    """check if the file exists and provide the absolute path
+
+    Args:
+        filepath (str): file path to asses (relative or absolute)
+
+    Returns:
+        str: absolute path
+    """
+
+    # chech arguments:
+    filepath = __validateInstance(filepath, str)
+
+    # Analysis
+    try:
+        if os.path.isfile(filepath):
+            return os.path.abspath(filepath)
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{filepath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    msg = f"The path {filepath} is not an existing file "
+    msg = __createErrorMessage(
+        msg,
+        "Existing file",
+        f"Not a file [{filepath}]"
+    )
+    raise ValueError(msg)
+
+
+def __validateFileExtension(
+    filepath: str,
+    validExtensions: str | tuple[str]
+) -> str:
+    """Validate the File extension against a list of valid file
+
+    Args:
+        filepath (str): file path (relative or absolute)
+        validExtensions (str | tuple[str]): list of valid extensions
+                                            (shall start with ".")
+
+    Returns:
+        str: copu of the file path if the extension is correct
+    """
+
+    # arguments validation
+    filepath = __validateInstance(filepath, str)
+    validExtensions = __validateInstance(validExtensions, (str, tuple))
+
+    # Analysed the expected file extension
+    if isinstance(validExtensions, str):
+        # just a string
+        tupleExtension = (validExtensions,)
+    elif (
+        isinstance(validExtensions, tuple) and
+        all(isinstance(elem, str) for elem in validExtensions)
+          ):
+        tupleExtension = validExtensions
+    else:
+        msg = ("__validateFileExtension() arg 2",
+               " must be a string or a tuple of strings"
+               )
+        msg = __createErrorMessage(
+            msg,
+            "string or tuple of strings",
+            validExtensions
+        )
+
+    # get the extension
+    try:
+        file_extension = pathlib.Path(filepath).suffix
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{filepath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    if file_extension in tupleExtension:
+        return filepath
+
+    # raise error
+
+    msg = f"The file [{filepath}] has not the appropriate extension"
+    msg = __createErrorMessage(msg, tupleExtension, file_extension)
+    raise InvalidFileExtension(msg)
+
+
+def isValidExtension(
+    filepath: str,
+    expectedExtensions: str | tuple[str]
+) -> bool:
+    """check if a string has an appropriate extension
+
+    Args:
+        filepath (str): file path to test
+        expectedExtensions (str | tuple[str]): list of valid extension
+                                               (shall start with ".")
+
+    Returns:
+        bool: True if Valid or False else
+    """
+
+    # call the __validateFileExtension function
+    try:
+        filepath = __validateFileExtension(filepath, expectedExtensions)
+        return True
+    except InvalidFileExtension:
+        return False
+    except Exception as Exc:
+        raise Exc
+
+
+def __validateFolder(folderpath: str) -> str:
+    """check if the file exists and provide the absolute path
+
+    Args:
+        folderpath (str): folder path to asses (relative or absolute)
+
+    Returns:
+        str: absolute path of the existing folder
+    """
+
+    # chech arguments:
+    folderpath = __validateInstance(folderpath, str)
+
+    # Analysis
+    try:
+        if os.path.isdir(folderpath):
+            return os.path.abspath(folderpath)
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{folderpath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    msg = f"The path {folderpath} is not an existing folder "
+    msg = __createErrorMessage(
+        msg,
+        "Existing folder",
+        f"Not a folder [{folderpath}]"
+    )
+    raise ValueError(msg)
+
+# ===================== DATA VALIDATION ===========================
+
+
+def __validateInstance(
+    data: Any,
+    instances: type | List[type] | Tuple[type],
+    inheritance: bool = False
+) -> Any:
+    """validate if a data as the appropriate type
+
+    Args:
+        data (Any): data to assess
+        instances (type | Tuple[type]): expected types
+        inheritance (bool, optional): inheritance activated
+            Defaults to False.
+
+    Returns:
+        Any: same object as data
+    """
+
+    # Nested evaluation function
+    def evaluateType(data, listTypes, inheritance) -> bool:
+        if inheritance:
+            # with inheritance
+            return isinstance(data, listTypes)
+        else:
+            # inheritance is disable
+            return type(data) in listTypes
+
+    # check the list of accepted types
+    if isinstance(instances, type):
+        listTypes = (instances,)  # force to have a one element tuple
+    elif (isinstance(instances, tuple) and
+          all(isinstance(elem, type) for elem in instances)):
+        listTypes = instances
+    else:
+        msg = "__validateInstance() arg 2 must be a type or a tuple of types"
+        msg = __createErrorMessage(
+            msg,
+            "type or tuple of types",
+            type(data)
+        )
+        raise ValueError(msg)
+
+    if evaluateType(data, listTypes, inheritance):
+        return data
+
+    # raise error
+    msg = ("The input shall respected the"
+           f" expected types (inheritance: {inheritance})")
+    msg = __createErrorMessage(msg, instances, type(data))
+    raise TypeError(msg)
+
+
+def __validateListInstances(dataList: List, instances) -> List:
+    raise NotImplementedError("To be done")
+
+
+def __validateTupleInstances(dataList: Tuple, instances) -> List:
+    raise NotImplementedError("To be done")
+
+
 # ===============================  PROTECTED CLASS  =========================
+
+
 class ImmutableClass:
     '''Freeze any class such that instantiated
     objects become immutable. Also use __slots__ for speed.

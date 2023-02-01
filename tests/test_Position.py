@@ -1,7 +1,7 @@
 """_UNIT TEST FOR Position Class
 """
 
-# CONSTANT
+
 
 # MODULE IMPORT
 from dragonfly.geography import Position
@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 import math
 
-
+# CONSTANTS
 ABSOLUTE_TOLERANCE  = 1e-12
 RELATIVE_TOLERANCE  = 1e-6
 
