@@ -7,6 +7,7 @@ collect all the utility fonction of dragonFly
 
 # import module
 import numpy as np
+import os
 from scipy.spatial.transform import Rotation
 from typing import Any, List, Tuple
 
@@ -165,7 +166,32 @@ def __createErrorMessage(errorMsg: str,
 
 
 def __validateFile(filepath: str) -> str:
-    return "False"
+    """check if the file exists and provide the absolute path
+
+    Args:
+        filepath (str): file path to asses (relative or absolute)
+
+    Returns:
+        str: absolute path
+    """
+    
+    # chech arguments:
+    filepath = __validateInstance(filepath, str)
+
+    try:
+        if os.path.isfile(filepath):
+            return os.path.abspath(filepath)
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{filepath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    msg = f"The path {filepath} is not an existing file "
+    msg = __createErrorMessage(
+        msg,
+        "Existing file",
+        f"Not a file [{filepath}]"
+    )
+    raise ValueError(msg)
 
 
 def __validateFileExtension(filepath: str, validExtension: list[str]) -> str:
