@@ -10,6 +10,15 @@ import numpy as np
 import os
 from scipy.spatial.transform import Rotation
 from typing import Any, List, Tuple
+import pathlib
+
+
+# EXCEPTION CREATOR
+
+
+class InvalidFileExtension(Exception):
+    "Raised when the file path has not the appropriate extension"
+    pass
 
 
 def _assertInstance(data_name: str, data, expected_Instance) -> None:
@@ -158,7 +167,7 @@ def __createErrorMessage(errorMsg: str,
     msg = (
         f"{errorMsg}\n" +
         f"Expected : {expectedValue}\n" +
-        f"Real:      {realValue}\n"
+        f"Current :  {realValue}\n"
     )
     return msg
 
@@ -195,8 +204,84 @@ def __validateFile(filepath: str) -> str:
     raise ValueError(msg)
 
 
-def __validateFileExtension(filepath: str, validExtension: list[str]) -> str:
-    return "False"
+def __validateFileExtension(
+    filepath: str,
+    validExtensions: str | tuple[str]
+) -> str:
+    """Validate the File extension against a list of valid file
+
+    Args:
+        filepath (str): file path (relative or absolute)
+        validExtensions (str | tuple[str]): list of valid extensions
+                                            (shall start with ".")
+
+    Returns:
+        str: copu of the file path if the extension is correct
+    """
+
+    # arguments validation
+    filepath = __validateInstance(filepath, str)
+    validExtensions = __validateInstance(validExtensions, (str, tuple))
+
+    # Analysed the expected file extension
+    if isinstance(validExtensions, str):
+        # just a string
+        tupleExtension = (validExtensions,)
+    elif (
+        isinstance(validExtensions, tuple) and
+        all(isinstance(elem, str) for elem in validExtensions)
+          ):
+        tupleExtension = validExtensions
+    else:
+        msg = ("__validateFileExtension() arg 2",
+               " must be a string or a tuple of strings"
+               )
+        msg = __createErrorMessage(
+            msg,
+            "string or tuple of strings",
+            validExtensions
+        )
+
+    # get the extension
+    try:
+        file_extension = pathlib.Path(filepath).suffix
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{filepath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    if file_extension in tupleExtension:
+        return filepath
+
+    # raise error
+
+    msg = f"The file [{filepath}] has not the appropriate extension"
+    msg = __createErrorMessage(msg, tupleExtension, file_extension)
+    raise InvalidFileExtension(msg)
+
+
+def isValidExtension(
+    filepath: str,
+    expectedExtensions: str | tuple[str]
+) -> bool:
+    """check if a string has an appropriate extension
+
+    Args:
+        filepath (str): file path to test
+        expectedExtensions (str | tuple[str]): list of valid extension
+                                               (shall start with ".")
+
+    Returns:
+        bool: True if Valid or False else
+    """
+
+    # call the __validateFileExtension function
+    try:
+        filepath = __validateFileExtension(filepath, expectedExtensions)
+        return True
+    except InvalidFileExtension:
+        return False
+    except Exception as Exc:
+        raise Exc
 
 
 def __validateFolder(folderpath: str) -> str:
