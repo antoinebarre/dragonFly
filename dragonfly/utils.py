@@ -174,10 +174,11 @@ def __validateFile(filepath: str) -> str:
     Returns:
         str: absolute path
     """
-    
+
     # chech arguments:
     filepath = __validateInstance(filepath, str)
 
+    # Analysis
     try:
         if os.path.isfile(filepath):
             return os.path.abspath(filepath)
@@ -198,14 +199,36 @@ def __validateFileExtension(filepath: str, validExtension: list[str]) -> str:
     return "False"
 
 
-def __validateFolder(filepath: str) -> str:
-    return "False"
+def __validateFolder(folderpath: str) -> str:
+    """check if the file exists and provide the absolute path
 
+    Args:
+        folderpath (str): folder path to asses (relative or absolute)
 
-def __absolutePath(path: str) -> str:
-    return "toto"
+    Returns:
+        str: absolute path of the existing folder
+    """
 
-# ==================== DATA VALIDATION ===========================
+    # chech arguments:
+    folderpath = __validateInstance(folderpath, str)
+
+    # Analysis
+    try:
+        if os.path.isdir(folderpath):
+            return os.path.abspath(folderpath)
+    except Exception as e:
+        msg = f"impossible to assess the arg1 [{folderpath}]"
+        raise Exception(msg).with_traceback(e.__traceback__)
+
+    msg = f"The path {folderpath} is not an existing folder "
+    msg = __createErrorMessage(
+        msg,
+        "Existing folder",
+        f"Not a folder [{folderpath}]"
+    )
+    raise ValueError(msg)
+
+# ===================== DATA VALIDATION ===========================
 
 
 def __validateInstance(
