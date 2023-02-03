@@ -7,6 +7,8 @@ from .geography import Position
 from .constant import EarthModel, _DEFAULT_MODEL
 import numpy as np
 
+__all__ = ["Gravity"]
+
 
 class Gravity():
     def __init__(self, x_ECEF: float, y_ECEF: float, z_ECEF: float,

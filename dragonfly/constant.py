@@ -11,7 +11,7 @@ _ELLIPSOID = ["WGS84", "SPHERICAL"]
 # List of available Ellipsoid
 _ELLIPSOID_PARAMETER = [
     {"name": "WGS84", "semiMajorAxis": 6378137.0,
-     "flattening": 1/298.257223563, "j2": 1.08263E-3},
+     "flattening": 1/298.257223563, "J2": 1.08263E-3},
     {"name": "SPHERICAL", "semiMajorAxis": 6378137.0,
      "flattening": 0, "J2": 0}
 ]
@@ -116,7 +116,7 @@ class EarthModel():
         """
         model_dict = next(item for item in _ELLIPSOID_PARAMETER
                           if item["name"] == self.model)
-        return model_dict["j2"]
+        return model_dict["J2"]
 
 # ----------------------  VISUAL FRAMEWORK  -------------------
 
