@@ -7,8 +7,9 @@
 import numpy as np
 import math
 from .constant import EarthModel, _DEFAULT_MODEL
-from .utils import _assertInstance
 from .utils import rotx, roty, rotz
+from .utils import __validateInstance as validateInstance
+
 
 """
 ----------- POSITION CLASS -----------
@@ -129,9 +130,9 @@ class Position:
         """
 
         # IO management
-        _assertInstance("latitude", lat, (float, int, long))
-        _assertInstance("longitude", long, (float, int, long))
-        _assertInstance("altitude", alt, (float, int, long))
+        lat = float(validateInstance(lat, (float, int), inheritance=True))
+        long = float(validateInstance(long, (float, int), inheritance=True))
+        alt = float(validateInstance(alt, (float, int), inheritance=True))
 
         # create EarthModel
         earth = EarthModel(ellipsoid)

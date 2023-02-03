@@ -11,9 +11,12 @@ import os
 from scipy.spatial.transform import Rotation
 from typing import Any, List, Tuple
 import pathlib
+import logging
+import dragonfly
+from rich.logging import RichHandler
 
 
-# EXCEPTION CREATOR
+# ======================== CUTOM CLASS ================================
 
 
 class InvalidFileExtension(Exception):
@@ -21,25 +24,7 @@ class InvalidFileExtension(Exception):
     pass
 
 
-def _assertInstance(data_name: str, data, expected_Instance) -> None:
-    """PRIVATE TOOLS - used to standardize the error message for Instance
-    assessment in dragonFly
-
-    Args:
-        data_name (str): name of the data
-        data (str): value to assess
-        expected_Instance (str): expected data type
-    """
-
-    if not isinstance(data, expected_Instance):
-        message = (f"{data_name} shall be of the following type(s) :"
-                   f" {expected_Instance} [current{type(data)}] ")
-        raise TypeError(message)
-
-
-"""
--------------------- ROTATION MATRIX --------------------
-"""
+# ======================== ROTATION MATRIX ================================
 
 
 def rotx(theta: float) -> np.ndarray:
@@ -403,3 +388,5 @@ class ImmutableClass:
         if self._frozen:
             raise AttributeError('This object is immutable')
         object.__setattr__(self, *args, **kwargs)
+
+# ===============================  LOGGING  =========================
