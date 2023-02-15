@@ -2,5 +2,5 @@ import pytest
 from dragonfly.dev import FolderAnalysis
 
 
-#retcode = pytest.main()
+retcode = pytest.main()
 analysis = FolderAnalysis("dragonfly")
