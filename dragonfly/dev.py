@@ -25,6 +25,7 @@ from rich.table import Table
 from prettytable import PrettyTable
 
 from .utils import ImmutableClass
+from .utils import __readASCIIFile as readASCIIFile
 from .constant import LINE_SIZE
 from .utils import __validateFolder as validateFolder
 from .utils import __validateFile as validateFile
@@ -65,7 +66,7 @@ class CodeMetric(ABC):
             filePath (str): file path (absolute or relative)
 
         """
-        # check if filepath is a existing file and check extension
+        # check if filepath is an existing file and check extension
         filePath = validateFile(filePath)
         filePath = validateFileExtension(filePath, ".py")
         self.filePath = filePath
@@ -77,9 +78,7 @@ class CodeMetric(ABC):
         Returns:
             str : all data of the Python file
         """
-        with open(self.filePath, 'r') as file:
-            data = file.read()
-        return data
+        return readASCIIFile(self.filePath)
 
     @abstractproperty
     def title(self) -> str:
@@ -711,9 +710,8 @@ class FileAnalysis():
         Returns:
             str : all data of the Python file
         """
-        with open(self.filePath, 'r') as file:
-            data = file.read()
-        return data
+        
+        return readASCIIFile(self.filePath)
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS

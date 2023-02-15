@@ -313,6 +313,19 @@ def __validateFolder(folderpath: str) -> str:
     )
     raise ValueError(msg)
 
+
+def __readASCIIFile(filePath:str | bytes | os.PathLike) -> str:
+    """PRIVATE - read an existing ASCII File
+
+    Args:
+        filePath (str | bytes | os.PathLike): file path (absolute or relative)
+
+    Returns:
+        str: contents of the file
+    """
+    return pathlib.Path(filePath).read_text()
+
+
 # ===================== DATA VALIDATION ===========================
 
 
