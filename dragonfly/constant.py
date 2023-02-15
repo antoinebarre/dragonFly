@@ -1,26 +1,43 @@
-"""Store all the constant used by dragonFly
+"""Store all the constants used by dragonFly
 """
 
 # IMPORTED MODULES
 import math
+from collections import namedtuple
+
+__all__ = ["EarthModel"]
+
+# ------------------------  GLOBAL NAMETUPLE  ------------------------
+
+_Ellipsoid_parameters = namedtuple("_Ellipsoid_parameters", (
+    "name",
+    "semiMajorAxis",
+    "flattening",
+    "j2",
+))
 
 # ------------------------  EARTH MODELS  ------------------------
-
-_ELLIPSOID = ["WGS84", "SPHERICAL"]
-
-# List of available Ellipsoid
-_ELLIPSOID_PARAMETER = [
-    {"name": "WGS84", "semiMajorAxis": 6378137.0,
-     "flattening": 1/298.257223563, "j2": 1.08263E-3},
-    {"name": "SPHERICAL", "semiMajorAxis": 6378137.0,
-     "flattening": 0, "J2": 0}
-]
 
 # default ellipsoid model
 _DEFAULT_MODEL = "WGS84"
 
+_ELLIPSOIDS = [
+    _Ellipsoid_parameters(
+        name="WGS84",
+        semiMajorAxis=6378137.0,
+        flattening=1/298.257223563,
+        j2=1.08263E-3,
+    ),
+    _Ellipsoid_parameters(
+        name="SPHERICAL",
+        semiMajorAxis=6378137.0,
+        flattening=0.0,
+        j2=0.0,
+    )
+]
+
 # -------------------------------------------------------------------
-#                       FOLDER ANALYSIS
+#                       EARTH MODEL
 # -------------------------------------------------------------------
 
 
@@ -57,7 +74,7 @@ class EarthModel():
             msg = f"the model value {value} is not an appropriate string"
             raise AttributeError(msg)
 
-        if value in _ELLIPSOID:
+        if value in [ellipsoid.name for ellipsoid in _ELLIPSOIDS]:
             self._model = value.upper()
         else:
             msg = (f"the model {value.upper()}"
@@ -74,9 +91,9 @@ class EarthModel():
         Returns:
             float: semi major axis value of the ellispoid in meters
         """
-        model_dict = next(item for item in _ELLIPSOID_PARAMETER
-                          if item["name"] == self.model)
-        return model_dict["semiMajorAxis"]
+        model = next(item for item in _ELLIPSOIDS
+                     if item.name == self.model)
+        return model.semiMajorAxis
 
     @property
     def f(self) -> float:
@@ -85,9 +102,9 @@ class EarthModel():
         Returns:
             float: flattening of the ellispoid
         """
-        model_dict = next(item for item in _ELLIPSOID_PARAMETER
-                          if item["name"] == self.model)
-        return model_dict["flattening"]
+        model = next(item for item in _ELLIPSOIDS
+                     if item.name == self.model)
+        return model.flattening
 
     @property
     def b(self) -> float:
@@ -114,9 +131,9 @@ class EarthModel():
         Returns:
             float: Second gravitationla constant
         """
-        model_dict = next(item for item in _ELLIPSOID_PARAMETER
-                          if item["name"] == self.model)
-        return model_dict["j2"]
+        model = next(item for item in _ELLIPSOIDS
+                     if item.name == self.model)
+        return model.j2
 
 # ----------------------  VISUAL FRAMEWORK  -------------------
 
