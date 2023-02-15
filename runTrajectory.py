@@ -64,7 +64,7 @@ alt = model.y[1]
 
 print(alt)
 
-while tc < t.max() and alt >=0 :
+while tc < t.max() and alt >= 0:
     model.step()
     tc = model.t
     alt = model.y[1]
