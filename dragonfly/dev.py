@@ -46,7 +46,7 @@ _ListResults = namedtuple("_ListResults", (
 
 __all__ = [
     "FileAnalysis",
-    "FolderAnalysis"
+    "FolderAnalysis",
 ]
 
 # -------------------------------------------------------------------
