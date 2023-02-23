@@ -1,9 +1,9 @@
 name: Python application
-on: [push]
-#   pull_request:
-#    types: [opened, reopened,ready_for_review,review_requested]
-#    branches:
-#      - 'main'
+on:
+  pull_request:
+    types: [opened, reopened,ready_for_review,review_requested]
+    branches:
+     - 'main'
 jobs:
   Code_Verification:
     runs-on: ubuntu-latest
