@@ -13,6 +13,7 @@ from collections import namedtuple
 import hashlib
 import ast
 import datetime
+import platform
 
 from radon.visitors import ComplexityVisitor
 import radon.complexity
@@ -30,6 +31,9 @@ from .utils import __validateFolder as validateFolder
 from .utils import __validateFile as validateFile
 from .utils import __validateFileExtension as validateFileExtension
 
+
+# ------------------- LINTER OPTIONS ------------------
+# pylint: disable=invalid-name
 
 # ----------------- GLOBAL NAMEDTUPLE -----------------
 _ListError = namedtuple("_ListError", (
@@ -52,6 +56,7 @@ __all__ = [
 # -------------------------------------------------------------------
 #                       CRITERIA CLASSES
 # -------------------------------------------------------------------
+
 
 class CodeMetric(ABC):
     """ABSTRACT METHOD FOR CODE METRICS"""
@@ -157,7 +162,6 @@ class CyclomaticComplexity(CodeMetric):
                   " cyclomatic complexity.")
     criteria_value = "B"
 
-
     def isValid(self) -> bool:
         """check if the file is valid against cyclomatic complexity
 
@@ -209,13 +213,12 @@ class CyclomaticComplexity(CodeMetric):
         my_tableCI.field_names = ["Item Name", "Class",
                                   "Complexity Letter", "Line"]
         for item in res:
-            my_tableCI.add_row(
-                [
+            my_tableCI.add_row([
                 item.name,
                 item.class_name,
                 f"{item.complexityLetter} ({item.complexity})",
                 item.startLine
-                ]
+            ]
             )
 
         return str(my_tableCI)
@@ -349,11 +352,11 @@ class CyclomaticComplexity(CodeMetric):
 
 
 class CommentRatio(CodeMetric):
+    """Comment Ratio Class"""
     title = "Comment Ratio (%)"
     definition = ("The content of the Python file shall have a minimum"
                   " percentage of comments excluding the blank lines")
     criteria_value = 30
-
 
     def calculateCriteria(self) -> float:
         "Calculate the Comment percentage of the file as a float"
@@ -436,7 +439,6 @@ class Maintenability(CodeMetric):
                   " level of Maintenability")
     criteria_value = "A"
 
-
     def calculateCriteria(self) -> float:
         "Calculate maintenability as Letter"
         # get data
@@ -504,6 +506,7 @@ class Maintenability(CodeMetric):
 
 
 class FileAnalysis():
+    """FileAnalysis Class used to assess individual Python file"""
 
     # ---------- CREATOR -------------
 
@@ -533,7 +536,6 @@ class FileAnalysis():
 
         # set file path (already checked)
         self.filePath = os.path.abspath(filePath)
-
 
 # -------------------- FILE PROPERTIES ----------------------------
 
@@ -592,7 +594,7 @@ class FileAnalysis():
         Returns:
             int: number of Classes
         """
-        with open(self.filePath,encoding="utf-8") as f:
+        with open(self.filePath, encoding="utf-8") as f:
             tree = ast.parse(f.read())
         return sum(isinstance(exp, ast.FunctionDef) for exp in tree.body)
 
@@ -604,7 +606,7 @@ class FileAnalysis():
             int: number of lines
         """
         nloc = 0
-        with open(self.filePath,encoding="utf-8") as fp:
+        with open(self.filePath, encoding="utf-8") as fp:
             for line in fp:
                 if line.strip():
                     nloc += 1
@@ -648,6 +650,7 @@ class FileAnalysis():
     # ------------------ EXPORT TO STRING -------------------------
 
     def exportToString(self) -> str:
+        """export results to string"""
 
         # get data
         datas = self._data
@@ -694,6 +697,37 @@ class FileAnalysis():
 
         return msg
 
+    def exportStatus(self) -> list[namedtuple]:
+        """ export a list of namedtuple with the synthetic
+        output of the assessment of the file"""
+
+        # initiate the status namedtuple
+        FileStatus = namedtuple("fileStatus", [
+                          "criteria",
+                          "expected_value",
+                          "assessment",
+                          ])
+
+        # get data
+        datas = self._data
+
+        # initiate res
+        res = []
+
+        for data in datas:
+
+            # get result
+            crit = data.exportCriteria()
+
+            # feed the table
+            res.append(FileStatus(
+                criteria=crit.criteria_title,
+                expected_value=crit.criteria_value,
+                assessment=crit.results,
+            ))
+
+        return res
+
     def exportErrors(self) -> List[_ListError]:
         """Export the detected errors as a list"""
 
@@ -711,8 +745,9 @@ class FileAnalysis():
         Returns:
             str : all data of the Python file
         """
-        
+
         return readASCIIFile(self.filePath)
+
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
@@ -720,11 +755,12 @@ class FileAnalysis():
 
 
 class FolderAnalysis(ImmutableClass):
+    """Immutable Class for folder Analysis"""
     def __init__(self, folderPath: str,
                  max_complexity_letter: str = "B",
                  max_maintenance_letter: str = "A",
                  min_comment_ration: int = 30) -> None:
-        """_summary_
+        """create a folder analysis class object
 
         Args:
             folderPath (str): folder path (absolute or relative)
@@ -764,6 +800,7 @@ class FolderAnalysis(ImmutableClass):
             "\n" +
             "Folder Description :\n".upper() +
             f"\t- folder:{self.folderPath}\n" +
+            f"\t- Platform: {self.platform_info}\n"
             "\n"
         )
 
@@ -846,6 +883,16 @@ class FolderAnalysis(ImmutableClass):
                            )]
         return pythonFiles
 
+    @property
+    def platform_info(self) -> str:
+        """ Provide the platform info"""
+        platform_info = platform.uname()
+        mystr = (f"{platform_info.machine}"
+                 f" - OS : {platform_info.system} {platform_info.version}")
+        return mystr
+
+    # -------------------- PROPERTIES ------------------------
+
     def _getResults(self,
                     ) -> List:
         """Provide the list of code metrics for all analyzed python files
@@ -876,9 +923,10 @@ class FolderAnalysis(ImmutableClass):
         console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
                      characters="=",
                      style=Style(color="cyan"))
-        console.print("[bold]Platform :")
+        console.print(f"[bold]Platform :[/bold] {self.platform_info}")
         console.print(
-            f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]"
+            ("[bold]Root Folder :[/bold] [bold cyan]"
+             f"{self.folderPath}[/bold cyan]")
         )
         console.print(f"[bold]Number of Elements :  {len(self.listFiles)}\n")
 
@@ -895,6 +943,7 @@ class FolderAnalysis(ImmutableClass):
 
             # collect info
             console.print(f"[cyan]>>> Analysis of {rel_path}...")
+            console.print(self._createRichTableFromList(obj.exportStatus()))
 
             # get results
             validationResult = obj.getValidationStatus()
@@ -918,9 +967,6 @@ class FolderAnalysis(ImmutableClass):
                                   )
 
             list_results.append(newRes)
-
-            # console output
-            console.print(newRes.validStatus)
 
         # final consol output
         nbFalse = [item.isValid for item in list_results].count(False)
@@ -977,3 +1023,24 @@ class FolderAnalysis(ImmutableClass):
         res = all([item.isValid
                    for item in self._results])
         return res
+
+    def exit(self):
+        """exit mode for continuous integration.
+        If all Ok exit = 0 and if an error exit = 1"""
+
+        return not self.isValid()
+
+    # ---------------------- UTILS -----------------------
+
+    @staticmethod
+    def _createRichTableFromList(values: list[namedtuple]) -> Table:
+        """ PRIVATE METHOD  - create a rich table from a list of namedtuple"""
+
+        fieldsNames = values[0]._fields
+
+        table = Table(*fieldsNames)
+
+        for value in values:
+            table.add_row(*list(value))
+
+        return table

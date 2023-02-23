@@ -314,7 +314,7 @@ def __validateFolder(folderpath: str) -> str:
     raise ValueError(msg)
 
 
-def __readASCIIFile(filePath:str | bytes | os.PathLike) -> str:
+def __readASCIIFile(filePath: str | bytes | os.PathLike) -> str:
     """PRIVATE - read an existing ASCII File
 
     Args:
