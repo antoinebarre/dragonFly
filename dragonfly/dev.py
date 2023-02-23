@@ -4,24 +4,23 @@
 ######################################################################
 """
 
-# Modules Import
-from abc import ABC, abstractmethod, abstractproperty
+# ----------------- Modules Import -----------------
+
+from abc import ABC, abstractmethod
 from typing import List, Any
 import os
 from collections import namedtuple
+import hashlib
+import ast
+import datetime
 
 from radon.visitors import ComplexityVisitor
 import radon.complexity
 import radon.metrics
 import radon.raw
-import hashlib
-import ast
-import datetime
 from rich.console import Console
 from rich.style import Style
 from rich.table import Table
-
-
 from prettytable import PrettyTable
 
 from .utils import ImmutableClass
@@ -32,12 +31,13 @@ from .utils import __validateFile as validateFile
 from .utils import __validateFileExtension as validateFileExtension
 
 
-# GLOBAL NAMEDTUPLE
+# ----------------- GLOBAL NAMEDTUPLE -----------------
 _ListError = namedtuple("_ListError", (
     "criteria_title",
     "criteria_value",
     "detected_errors"
 ))
+
 _ListResults = namedtuple("_ListResults", (
     "criteria_title",
     "criteria_value",
@@ -46,30 +46,29 @@ _ListResults = namedtuple("_ListResults", (
 
 __all__ = [
     "FileAnalysis",
-    "FolderAnalysis"
+    "FolderAnalysis",
 ]
 
 # -------------------------------------------------------------------
 #                       CRITERIA CLASSES
 # -------------------------------------------------------------------
 
-
 class CodeMetric(ABC):
     """ABSTRACT METHOD FOR CODE METRICS"""
     _VALID_LETTERS = ["A", "B", "C", "D", "E"]
     _VALID_RANGE = {"min": 0, "max": 100}
 
-    def __init__(self, filePath: str) -> None:
+    def __init__(self, file_path: str) -> None:
         """Generic Creator for criteria
 
         Args:
-            filePath (str): file path (absolute or relative)
+            file_path (str): file path (absolute or relative)
 
         """
         # check if filepath is an existing file and check extension
-        filePath = validateFile(filePath)
-        filePath = validateFileExtension(filePath, ".py")
-        self.filePath = filePath
+        file_path = validateFile(file_path)
+        file_path = validateFileExtension(file_path, ".py")
+        self.filePath = file_path
 
     @property
     def data(self) -> str:
@@ -80,37 +79,40 @@ class CodeMetric(ABC):
         """
         return readASCIIFile(self.filePath)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def title(self) -> str:
-        pass
+        """title of the code metric"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def definition(self) -> str:
-        pass
+        """definition of the code metric"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def criteria_value(self) -> Any:
-        pass
+        """criteria value of the code metric"""
 
     @abstractmethod
     def isValid(self) -> bool:
-        pass
+        """check if the file path is valid against the criteria"""
 
     @abstractmethod
     def toString(self) -> str:
-        pass
+        """export to string the result of the assessment"""
 
     @abstractmethod
     def calculateCriteria(self) -> Any:
-        pass
+        """calculate if the criteria is passed or failled"""
 
     @abstractmethod
     def exportErrors(self) -> _ListError:
-        pass
+        """export the error message"""
 
     @abstractmethod
     def exportCriteria(self) -> _ListResults:
-        pass
+        """export the criteria message"""
 
     def setCriteria(self, criteria) -> None:
         """ Change criteria Value"""
@@ -155,8 +157,6 @@ class CyclomaticComplexity(CodeMetric):
                   " cyclomatic complexity.")
     criteria_value = "B"
 
-    def __init__(self, filePath: str) -> None:
-        super().__init__(filePath)
 
     def isValid(self) -> bool:
         """check if the file is valid against cyclomatic complexity
@@ -209,7 +209,14 @@ class CyclomaticComplexity(CodeMetric):
         my_tableCI.field_names = ["Item Name", "Class",
                                   "Complexity Letter", "Line"]
         for item in res:
-            my_tableCI.add_row([item.name, item.class_name, f"{item.complexityLetter} ({item.complexity})", item.startLine])  # noqa: E501
+            my_tableCI.add_row(
+                [
+                item.name,
+                item.class_name,
+                f"{item.complexityLetter} ({item.complexity})",
+                item.startLine
+                ]
+            )
 
         return str(my_tableCI)
 
@@ -230,12 +237,12 @@ class CyclomaticComplexity(CodeMetric):
         result = []
 
         # function
-        result.extend(self._collectInfo(evaluation.functions, self.filePath))
+        result.extend(self._collect_info(evaluation.functions))
 
         # Class
         list_classes = evaluation.classes
         for classItem in list_classes:
-            result.extend(self._collectInfo(classItem.methods, self.filePath))
+            result.extend(self._collect_info(classItem.methods))
 
         # clean result of empty lists
         while [] in result:
@@ -309,12 +316,11 @@ class CyclomaticComplexity(CodeMetric):
         return obj
 
     @staticmethod
-    def _collectInfo(items, pythonFile):
+    def _collect_info(items):
         """PRIVATE FUNCTION - use to collect Cyclomatic complexity
 
         Args:
             items (list): list of complexity result
-            pythonFile (string): path of the file
 
         Returns:
             list : list of namedtuples
@@ -348,8 +354,6 @@ class CommentRatio(CodeMetric):
                   " percentage of comments excluding the blank lines")
     criteria_value = 30
 
-    def __init__(self, filePath: str) -> None:
-        super().__init__(filePath)
 
     def calculateCriteria(self) -> float:
         "Calculate the Comment percentage of the file as a float"
@@ -364,7 +368,7 @@ class CommentRatio(CodeMetric):
         effectiveLines = (loc_metric.comments +
                           loc_metric.multi +
                           loc_metric.sloc)
-        commentsLines = (loc_metric.comments + loc_metric.multi)
+        commentsLines = loc_metric.comments + loc_metric.multi
 
         return round(100 * (commentsLines / effectiveLines), 1)
 
@@ -432,8 +436,6 @@ class Maintenability(CodeMetric):
                   " level of Maintenability")
     criteria_value = "A"
 
-    def __init__(self, filePath: str) -> None:
-        super().__init__(filePath)
 
     def calculateCriteria(self) -> float:
         "Calculate maintenability as Letter"
@@ -532,7 +534,6 @@ class FileAnalysis():
         # set file path (already checked)
         self.filePath = os.path.abspath(filePath)
 
-        pass
 
 # -------------------- FILE PROPERTIES ----------------------------
 
@@ -545,8 +546,8 @@ class FileAnalysis():
     @property
     def fileFolder(self):
         """path of the folder of the analyzed file"""
-        dir, _ = os.path.split(self.filePath)
-        return dir
+        directory, _ = os.path.split(self.filePath)
+        return directory
 
     @property
     def checksum_MD5(self) -> str:
@@ -591,7 +592,7 @@ class FileAnalysis():
         Returns:
             int: number of Classes
         """
-        with open(self.filePath) as f:
+        with open(self.filePath,encoding="utf-8") as f:
             tree = ast.parse(f.read())
         return sum(isinstance(exp, ast.FunctionDef) for exp in tree.body)
 
@@ -603,7 +604,7 @@ class FileAnalysis():
             int: number of lines
         """
         nloc = 0
-        with open(self.filePath) as fp:
+        with open(self.filePath,encoding="utf-8") as fp:
             for line in fp:
                 if line.strip():
                     nloc += 1
@@ -876,22 +877,24 @@ class FolderAnalysis(ImmutableClass):
                      characters="=",
                      style=Style(color="cyan"))
         console.print("[bold]Platform :")
-        console.print(f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]")  # noqa: E501
+        console.print(
+            f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]"
+        )
         console.print(f"[bold]Number of Elements :  {len(self.listFiles)}\n")
 
-        for filePath in self.listFiles:
+        for file_path in self.listFiles:
 
             # get relative path
-            relPath = os.path.relpath(filePath, self.folderPath)
+            rel_path = os.path.relpath(file_path, self.folderPath)
 
-            obj = FileAnalysis(filePath,
+            obj = FileAnalysis(file_path,
                                maxComplexityLetter=self.max_complexity_letter,
                                maxMaintenanceLetter=self.max_maintenance_letter,  # noqa: E501
                                minCommentRatio=self.min_comment_ration
                                )
 
             # collect info
-            console.print(f"[cyan]>>> Analysis of {relPath}...")
+            console.print(f"[cyan]>>> Analysis of {rel_path}...")
 
             # get results
             validationResult = obj.getValidationStatus()
@@ -899,7 +902,7 @@ class FolderAnalysis(ImmutableClass):
             # Collect errors
             if not obj.isValid():
                 newError = {
-                    "relative Path": relPath,
+                    "relative Path": rel_path,
                     "errors": obj.exportErrors()
                 }
                 list_errors.append(newError)
@@ -907,7 +910,7 @@ class FolderAnalysis(ImmutableClass):
                 newError = None
 
             # Collect outputs for a file
-            newRes = FolderResult(filePath=relPath,
+            newRes = FolderResult(filePath=rel_path,
                                   stringInfo=obj.exportToString(),
                                   isValid=all(list(validationResult.values())),
                                   validStatus=validationResult,

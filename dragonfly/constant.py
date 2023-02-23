@@ -9,7 +9,7 @@ __all__ = ["EarthModel"]
 
 # ------------------------  GLOBAL NAMETUPLE  ------------------------
 
-_Ellipsoid_parameters = namedtuple("_Ellipsoid_parameters", (
+_EllipsoidParameters = namedtuple("_EllipsoidParameters", (
     "name",
     "semiMajorAxis",
     "flattening",
@@ -22,13 +22,13 @@ _Ellipsoid_parameters = namedtuple("_Ellipsoid_parameters", (
 _DEFAULT_MODEL = "WGS84"
 
 _ELLIPSOIDS = [
-    _Ellipsoid_parameters(
+    _EllipsoidParameters(
         name="WGS84",
         semiMajorAxis=6378137.0,
         flattening=1/298.257223563,
         j2=1.08263E-3,
     ),
-    _Ellipsoid_parameters(
+    _EllipsoidParameters(
         name="SPHERICAL",
         semiMajorAxis=6378137.0,
         flattening=0.0,
@@ -42,6 +42,10 @@ _ELLIPSOIDS = [
 
 
 class EarthModel():
+    """Earth Model Class used to model the Earth Ellipsoid and associated
+    characteristic
+    """
+    # pylint: disable=invalid-name
 
     earthRotationRate = 72.92115E-6  # rotation rate from the WGS84 rad/s
     mu = 3.986004418E14  # m-3s-2
@@ -56,13 +60,14 @@ class EarthModel():
         """
         try:
             model = model.upper()
-        except Exception:
+        except Exception as exc:
             msg = f"the model value {model} is not an appropriate string"
-            raise AttributeError(msg)
+            raise AttributeError(msg) from exc
         self.model = model
 
     @property
     def model(self):
+        """ name of the model"""
         return self._model
 
     @model.setter
@@ -70,9 +75,9 @@ class EarthModel():
         """ Check the setter for the model"""
         try:
             value = value.upper()
-        except Exception:
+        except Exception as exc:
             msg = f"the model value {value} is not an appropriate string"
-            raise AttributeError(msg)
+            raise AttributeError(msg) from exc
 
         if value in [ellipsoid.name for ellipsoid in _ELLIPSOIDS]:
             self._model = value.upper()
@@ -134,6 +139,8 @@ class EarthModel():
         model = next(item for item in _ELLIPSOIDS
                      if item.name == self.model)
         return model.j2
+
+    # pylint: enable=invalid-name
 
 # ----------------------  VISUAL FRAMEWORK  -------------------
 
