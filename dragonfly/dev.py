@@ -13,6 +13,7 @@ from collections import namedtuple
 import hashlib
 import ast
 import datetime
+import platform
 
 from radon.visitors import ComplexityVisitor
 import radon.complexity
@@ -728,7 +729,7 @@ class FileAnalysis():
 
         return res
 
-    
+
     def exportErrors(self) -> List[_ListError]:
         """Export the detected errors as a list"""
 
@@ -801,6 +802,7 @@ class FolderAnalysis(ImmutableClass):
             "\n" +
             "Folder Description :\n".upper() +
             f"\t- folder:{self.folderPath}\n" +
+            f"\t- Platform: {self.platform_info}\n"
             "\n"
         )
 
@@ -882,6 +884,17 @@ class FolderAnalysis(ImmutableClass):
                            not ("test" in name.lower())  # remove test file
                            )]
         return pythonFiles
+    
+    @property
+    def platform_info(self) -> str :
+        """ Provide the platform info"""
+        platform_info = platform.uname()
+        mystr = f"{platform_info.machine} - OS : {platform_info.system} {platform_info.version}"
+        return mystr
+
+    
+    # -------------------- PROPERTIES ------------------------
+
 
     def _getResults(self,
                     ) -> List:
@@ -913,7 +926,7 @@ class FolderAnalysis(ImmutableClass):
         console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
                      characters="=",
                      style=Style(color="cyan"))
-        console.print("[bold]Platform :[/bold]")
+        console.print(f"[bold]Platform :[/bold] {self.platform_info}")
         console.print(
             f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]"
         )
