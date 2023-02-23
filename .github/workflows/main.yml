@@ -4,7 +4,11 @@ jobs:
   Code_Verification:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - name: create Artifacts Folder
+      run: mkdir -p work/sco
+    - name: create example file
+      run: echo hello > work/sco/world.txt
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
@@ -28,3 +32,8 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: collect Artifacts
+      uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: work/sco/ # or path/to/artifact
