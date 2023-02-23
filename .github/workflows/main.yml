@@ -32,7 +32,8 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-    - uses: actions/upload-artifact@v3
+    - name: Collect Artifacts
+      uses: actions/upload-artifact@v3
       with:
         name: my-artifact
         path: work/sco/ # or path/to/artifact
