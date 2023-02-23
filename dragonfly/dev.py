@@ -31,6 +31,9 @@ from .utils import __validateFile as validateFile
 from .utils import __validateFileExtension as validateFileExtension
 
 
+# ------------------- LINTER OPTIONS ------------------
+# pylint: disable=invalid-name
+
 # ----------------- GLOBAL NAMEDTUPLE -----------------
 _ListError = namedtuple("_ListError", (
     "criteria_title",
@@ -694,6 +697,38 @@ class FileAnalysis():
 
         return msg
 
+
+    def exportStatus(self) -> list[namedtuple]:
+        """ export a list of namedtuple with the synthetic output of the assessment of the file"""
+
+        # initiate the status namedtuple
+        FileStatus = namedtuple("fileStatus", [
+                          "criteria",
+                          "expected_value",
+                          "assessment",
+                          ])
+
+        # get data
+        datas = self._data
+
+        #initiate res
+        res = []
+
+        for data in datas:
+
+            # get result
+            crit = data.exportCriteria()
+
+            # feed the table
+            res.append(FileStatus(
+                criteria=crit.criteria_title,
+                expected_value=crit.criteria_value,
+                assessment=crit.results,
+            ))
+
+        return res
+
+    
     def exportErrors(self) -> List[_ListError]:
         """Export the detected errors as a list"""
 
@@ -713,6 +748,7 @@ class FileAnalysis():
         """
         
         return readASCIIFile(self.filePath)
+    
 
 # -------------------------------------------------------------------
 #                       FOLDER ANALYSIS
@@ -720,11 +756,12 @@ class FileAnalysis():
 
 
 class FolderAnalysis(ImmutableClass):
+    """Immutable Class for folder Analysis"""
     def __init__(self, folderPath: str,
                  max_complexity_letter: str = "B",
                  max_maintenance_letter: str = "A",
                  min_comment_ration: int = 30) -> None:
-        """_summary_
+        """create a folder analysis class object
 
         Args:
             folderPath (str): folder path (absolute or relative)
@@ -876,7 +913,7 @@ class FolderAnalysis(ImmutableClass):
         console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
                      characters="=",
                      style=Style(color="cyan"))
-        console.print("[bold]Platform :")
+        console.print("[bold]Platform :[/bold]")
         console.print(
             f"[bold]Root Folder :[/bold] [bold cyan]{self.folderPath}[/bold cyan]"
         )
@@ -895,6 +932,7 @@ class FolderAnalysis(ImmutableClass):
 
             # collect info
             console.print(f"[cyan]>>> Analysis of {rel_path}...")
+            console.print(self._createRichTableFromList(obj.exportStatus()))
 
             # get results
             validationResult = obj.getValidationStatus()
@@ -918,9 +956,6 @@ class FolderAnalysis(ImmutableClass):
                                   )
 
             list_results.append(newRes)
-
-            # console output
-            console.print(newRes.validStatus)
 
         # final consol output
         nbFalse = [item.isValid for item in list_results].count(False)
@@ -977,3 +1012,24 @@ class FolderAnalysis(ImmutableClass):
         res = all([item.isValid
                    for item in self._results])
         return res
+    
+    def exit(self):
+        """exit mode for continuous integration.
+        If all Ok exit = 0 and if an error exit = 1"""
+
+        return not self.isValid()
+
+    # ---------------------- UTILS -----------------------
+    
+    @staticmethod
+    def _createRichTableFromList(values:list[namedtuple]) -> Table:
+        """ PRIVATE METHOD  - create a rich table from a list of namedtuple"""
+
+        fieldsNames = values[0]._fields
+
+        table = Table(*fieldsNames)
+
+        for value in values :
+            table.add_row(*list(value))
+
+        return table
