@@ -1,0 +1,43 @@
+name: Python application
+on:
+  pull_request:
+    types: [opened, reopened,ready_for_review,review_requested]
+    branches:
+      - 'main'
+jobs:
+  Code_Verification:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: create Artifacts Folder
+      run: mkdir -p work/sco
+    - name: create example file
+      run: echo hello > work/sco/world.txt
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Install dependencies for testing
+      run: |
+        if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --statistics
+    - name: Conformance Analysis
+      run: |
+        python runTest.py
+    - name: Test with pytest
+      run: |
+        pytest
+    - name: Collect Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: my-artifact
+        path: work/sco/ # or path/to/artifact
