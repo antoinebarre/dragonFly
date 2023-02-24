@@ -706,6 +706,7 @@ class FileAnalysis():
                           "criteria",
                           "expected_value",
                           "assessment",
+                          "valid",
                           ])
 
         # get data
@@ -724,6 +725,7 @@ class FileAnalysis():
                 criteria=crit.criteria_title,
                 expected_value=crit.criteria_value,
                 assessment=crit.results,
+                valid=str(data.isValid()),
             ))
 
         return res
@@ -888,7 +890,7 @@ class FolderAnalysis(ImmutableClass):
         """ Provide the platform info"""
         platform_info = platform.uname()
         mystr = (f"{platform_info.machine}"
-                 f" - OS : {platform_info.system} {platform_info.version}")
+                 f" - {platform_info.system} {platform_info.version}")
         return mystr
 
     # -------------------- PROPERTIES ------------------------
@@ -923,12 +925,14 @@ class FolderAnalysis(ImmutableClass):
         console.rule(title="[bold cyan]CODE CONFORMANCE ANALYSIS",
                      characters="=",
                      style=Style(color="cyan"))
-        console.print(f"[bold]Platform :[/bold] {self.platform_info}")
+        console.print(("[bold]Platform :[/bold] "
+                       f"[bold cyan]{self.platform_info}[/bold cyan]"))
         console.print(
-            ("[bold]Root Folder :[/bold] [bold cyan]"
-             f"{self.folderPath}[/bold cyan]")
+            ("[bold]Root Folder :[/bold] "
+             f"[bold cyan]{self.folderPath}[/bold cyan]")
         )
-        console.print(f"[bold]Number of Elements :  {len(self.listFiles)}\n")
+        console.print(("[bold]Number of Elements :  [/bold]"
+                       f"{len(self.listFiles)}\n"))
 
         for file_path in self.listFiles:
 
