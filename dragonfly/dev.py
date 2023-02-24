@@ -879,7 +879,7 @@ class FolderAnalysis(ImmutableClass):
                        for name in files
                        if (name.endswith((".py")) and  # only python files
                            name != "__init__.py" and  # remove __init__
-                           not ("test" in name.lower())  # remove test file
+                           "test" not in name.lower()  # remove test file
                            )]
         return pythonFiles
 
