@@ -208,7 +208,7 @@ def __validateFileExtension(
     filepath: str,
     validExtensions: str | tuple[str]
 ) -> str:
-    """Validate the File extension against a list of valid file
+    """Validate the File extension against a list of valid file extension
 
     Args:
         filepath (str): file path (relative or absolute)
@@ -216,37 +216,18 @@ def __validateFileExtension(
                                             (shall start with ".")
 
     Returns:
-        str: copu of the file path if the extension is correct
+        str: copy of the file path if the extension is correct
     """
 
     # arguments validation
     filepath = __validateInstance(filepath, str)
-    validExtensions = __validateInstance(validExtensions, (str, tuple))
-
-    # Analysed the expected file extension
-    if isinstance(validExtensions, str):
-        # just a string
-        tupleExtension = (validExtensions,)
-    elif (
-        isinstance(validExtensions, tuple) and
-        all(isinstance(elem, str) for elem in validExtensions)
-          ):
-        tupleExtension = validExtensions
-    else:
-        msg = ("__validateFileExtension() arg 2",
-               " must be a string or a tuple of strings"
-               )
-        msg = __createErrorMessage(
-            msg,
-            "string or tuple of strings",
-            validExtensions
-        )
+    tupleExtension = __validateExtensionDefinition(validExtensions)
 
     # get the extension
     try:
         file_extension = pathlib.Path(filepath).suffix
     except Exception as e:
-        msg = f"impossible to assess the arg1 [{filepath}]"
+        msg = f"impossible to assess the file path [{filepath}]"
         raise Exception(msg).with_traceback(e.__traceback__)
 
     if file_extension in tupleExtension:
@@ -263,7 +244,7 @@ def isValidExtension(
     filepath: str,
     expectedExtensions: str | tuple[str]
 ) -> bool:
-    """check if a string has an appropriate extension
+    """check if a path has an appropriate extension
 
     Args:
         filepath (str): file path to test
@@ -282,6 +263,47 @@ def isValidExtension(
         return False
     except Exception as Exc:
         raise Exc
+
+
+def __validateExtensionDefinition(
+        extension2validate: str | tuple[str]) -> tuple[str]:
+    """Validate if a string is an appropriate extensions definition
+    (ie. start with a point) and return the same data if OK as a tuple
+
+    Args:
+        extension2validate (str | tuple[str]): extension definition to validate
+
+    Returns:
+        tuple[str]: tuple of valid extension
+    """
+    # check if string
+    __validateInstance(extension2validate, (str, tuple))
+
+    # Analysed the expected file extension
+    if (isinstance(extension2validate, str) and
+       extension2validate.startswith('.')):
+        # just a string
+        return (extension2validate,)
+    elif (
+        isinstance(extension2validate, tuple) and
+        all(isinstance(elem, str) and
+            elem.startswith('.')
+            for elem in extension2validate)
+          ):
+        return extension2validate
+
+    # create error message
+    msg = ("The extension definition"
+           " must be a string or a tuple of strings"
+           " that defines an extension (ie. start with '.')"
+           )
+    msg = __createErrorMessage(
+        msg,
+        "string or tuple of strings that define extension(s)",
+        extension2validate
+    )
+    # raise error
+    raise ValueError(msg)
 
 
 def __validateFolder(folderpath: str) -> str:
@@ -312,6 +334,55 @@ def __validateFolder(folderpath: str) -> str:
         f"Not a folder [{folderpath}]"
     )
     raise ValueError(msg)
+
+
+def listdirectory(dirpath: str, *,
+                  extensions: str | tuple[str] = (),
+                  excluded_folders: str | tuple[str] = ()) -> list[str]:
+    """get the list of the files in a directory and subdirectories
+    with possibility to select extensions and exclude some folders
+
+    Args:
+        dirpath (str): path of the directory to assess (absolute or relative)
+        extensions (str | tuple[str], optional): tuple of the
+         selected extension.
+            Defaults all with ().
+        excluded_folders (str | tuple[str], optional): tuple of
+         folders to exclude.
+            Defaults all with ().
+
+    Returns:
+        list[str]: _description_
+    """
+    # define folder exclusion strategy
+    grab_all_folders = False
+    if not excluded_folders:
+        grab_all_folders = True
+
+    # define extension strategy
+    if not extensions:
+        grab_all_extensions = True
+    else:
+        extensions = __validateExtensionDefinition(extensions)
+        grab_all_extensions = False
+
+    # initiate result
+    result = set()
+
+    # iterate over files
+    for dir_, _, files in os.walk(dirpath):
+
+        if ((not any(substring in dir_
+                     for substring in excluded_folders))
+           or grab_all_folders):
+            for file_name in files:
+                if ((pathlib.Path(file_name).suffix in extensions)
+                   or grab_all_extensions):
+                    rel_dir = os.path.relpath(dir_, dirpath)
+                    rel_file = os.path.join(rel_dir, file_name)
+                    result.add(rel_file)
+
+    return list(result)
 
 
 def __readASCIIFile(filePath: str | bytes | os.PathLike) -> str:
@@ -374,9 +445,12 @@ def __validateInstance(
         return data
 
     # raise error
-    msg = ("The input shall respected the"
-           f" expected types (inheritance: {inheritance})")
-    msg = __createErrorMessage(msg, instances, type(data))
+    msg = __createErrorMessage(
+        errorMsg=("The input shall respected the"
+                  f" expected types (inheritance: {inheritance})"),
+        expectedValue=instances,
+        realValue=f"{data} ({type(data)})",
+    )
     raise TypeError(msg)
 
 
