@@ -414,19 +414,10 @@ def __validateInstance(
             return type(data) in listTypes
 
     # check the list of accepted types
-    if isinstance(instances, type):
-        listTypes = (instances,)  # force to have a one element tuple
-    elif (isinstance(instances, tuple) and
-          all(isinstance(elem, type) for elem in instances)):
-        listTypes = instances
-    else:
-        msg = "__validateInstance() arg 2 must be a type or a tuple of types"
-        msg = __createErrorMessage(
-            msg,
-            "type or tuple of types",
-            type(data)
-        )
-        raise ValueError(msg)
+    listTypes = __validateTupleInstances(
+        data=instances,
+        instance=type,
+    )
 
     if evaluateType(data, listTypes, inheritance):
         return data
@@ -441,8 +432,44 @@ def __validateInstance(
     raise TypeError(msg)
 
 
-def __validateListInstances(dataList: List, instances) -> List:
-    raise NotImplementedError("To be done")
+def __validateListInstances(data: Any, instance) -> List:
+    """Check if data is a list of instance object
+
+    Args:
+        data (any): object to analyze (instance object or list of instance objects)
+        instance (type): type of the content of the expected list
+
+    Returns:
+        list: list of instance objects
+    """
+    
+    # check instance data type
+    if (not isinstance(instance,type)) or instance in (list,set,tuple):
+        msg = __createErrorMessage(
+            errorMsg=((
+                "the instance object shall be"
+                " a Type object different of list, tuple or set"
+            )),
+            expectedValue=type,
+            realValue=f"{instance} ({type(instance)})",
+        )
+        raise TypeError(msg)
+
+    if isinstance(data, instance):
+        return [data,]  # force to have a one element tuple
+    elif (isinstance(data, list) and
+          all(isinstance(elem, instance) for elem in data)):
+        return data
+
+    # Raise error
+    msg = __createErrorMessage(
+        errorMsg= (f"The data shall be a {str(instance)}"
+                   f" or a list of {str(instance)}"),
+        expectedValue=(f"{str(instance)} object "
+                       f"or list of {str(instance)} objects"),
+        realValue=data
+    )
+    raise TypeError(msg)
 
 
 def __validateTupleInstances(data: any, instance:type) -> tuple:
@@ -477,9 +504,9 @@ def __validateTupleInstances(data: any, instance:type) -> tuple:
     # Raise error
     msg = __createErrorMessage(
         errorMsg= (f"The data shall be a {str(instance)}"
-                   " or a tuple of {str(instances)}"),
+                   f" or a tuple of {str(instance)}"),
         expectedValue=(f"{str(instance)} object "
-                       "or Tuple of {str(instances)} objects"),
+                       f"or Tuple of {str(instance)} objects"),
         realValue=data
     )
     raise TypeError(msg)
