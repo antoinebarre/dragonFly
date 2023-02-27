@@ -110,9 +110,9 @@ def skew_matrix(vect: np.ndarray) -> np.ndarray:
     return M
 
 
-"""
----------------- INPUTS CHECKS ----------------
-"""
+# ============================================================================
+#                           INPUTS CHECKS NUMPY        
+# ============================================================================
 
 
 def __input_check_3x1(x_in):
@@ -125,35 +125,33 @@ def __input_check_3x1(x_in):
     elif (isinstance(x_in, (list, tuple)) and
           len(x_in) == 3 and all(isinstance(i, (float, int)) for i in x_in)):
         return np.reshape(np.array(x_in), (3, -1))
-    else:
-        msg = "The input shall be mutable to a [3x1] numpy array"
-        msg = __createErrorMessageData(msg, x_in)
-        raise ValueError(msg)
+    
+    # Raise Error
+    msg = __createErrorMessage(
+        errorMsg= "The input shall be mutable to a [3x1] numpy array",
+        expectedValue= "[3x1] Numpy Array",
+        realValue= f"Values: {x_in} - Type: {type(x_in)}",
+    )
+    raise ValueError(msg)
 
 
 def __input_check_3x3(x_in):
     """PRIVATE FUNCTION - check if the input is a [3x3] numpy array"""
     if isinstance(x_in, np.ndarray) and x_in.shape == (3, 3):
         return x_in
-    else:
-        msg = "The input shall a [3x3] numpy array"
-        msg = __createErrorMessageData(msg, x_in)
-        raise ValueError(msg)
+   
+    # raise error
+    msg = __createErrorMessage(
+        errorMsg="The input shall a [3x3] numpy array",
+        realValue=f"Values: {x_in} - Type: {type(x_in)}"
+    )
+    raise ValueError(msg)
 
 # ===============================  Error Message  ========================
 
-
-def __createErrorMessageData(errorMsg, value):
-    msg = (f"{errorMsg}\n" +
-           f"Current Value    : {value}\n" +
-           f"Curent Data Type : {type(value)}"
-           )
-    return msg
-
-
 def __createErrorMessage(errorMsg: str,
-                         expectedValue: str,
-                         realValue: str) -> str:
+                         expectedValue: str ="",
+                         realValue: str ="") -> str :
     """PRIVATE - create a generic error message
 
     Args:
@@ -224,12 +222,8 @@ def __validateFileExtension(
     tupleExtension = __validateExtensionDefinition(validExtensions)
 
     # get the extension
-    try:
-        file_extension = pathlib.Path(filepath).suffix
-    except Exception as e:
-        msg = f"impossible to assess the file path [{filepath}]"
-        raise Exception(msg).with_traceback(e.__traceback__)
-
+    file_extension = pathlib.Path(filepath).suffix
+    
     if file_extension in tupleExtension:
         return filepath
 
@@ -294,7 +288,7 @@ def __validateExtensionDefinition(
 
 
 def __validateFolder(folderpath: str) -> str:
-    """check if the file exists and provide the absolute path
+    """check if the folder exists and provide the absolute path
 
     Args:
         folderpath (str): folder path to asses (relative or absolute)
