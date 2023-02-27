@@ -277,32 +277,19 @@ def __validateExtensionDefinition(
         tuple[str]: tuple of valid extension
     """
     # check if string
-    __validateInstance(extension2validate, (str, tuple))
-
-    # Analysed the expected file extension
-    if (isinstance(extension2validate, str) and
-       extension2validate.startswith('.')):
-        # just a string
-        return (extension2validate,)
-    elif (
-        isinstance(extension2validate, tuple) and
-        all(isinstance(elem, str) and
-            elem.startswith('.')
-            for elem in extension2validate)
-          ):
+    extension2validate=__validateTupleInstances(extension2validate, str)
+    
+    if all(elem.startswith('.') for elem in extension2validate):
         return extension2validate
-
-    # create error message
-    msg = ("The extension definition"
-           " must be a string or a tuple of strings"
-           " that defines an extension (ie. start with '.')"
-           )
-    msg = __createErrorMessage(
-        msg,
-        "string or tuple of strings that define extension(s)",
-        extension2validate
-    )
+    
     # raise error
+    msg = __createErrorMessage(
+        errorMsg=(
+            "The extension definition shall start with '.'"
+        ),
+        expectedValue="example '.py', '.txt'",
+        realValue=f"{extension2validate}"
+    )
     raise ValueError(msg)
 
 
@@ -458,8 +445,44 @@ def __validateListInstances(dataList: List, instances) -> List:
     raise NotImplementedError("To be done")
 
 
-def __validateTupleInstances(dataList: Tuple, instances) -> List:
-    raise NotImplementedError("To be done")
+def __validateTupleInstances(data: any, instance:type) -> tuple:
+    """Check if data is a tuple of instance object
+
+    Args:
+        data (any): object to analyze (instance object or tuple of instance objects)
+        instances (type): type of the content of the expected tuple
+
+    Returns:
+        tuple: tuple of instance objects
+    """
+    
+    # check instance data type
+    if (not isinstance(instance,type)) or instance in (list,set,tuple):
+        msg = __createErrorMessage(
+            errorMsg=((
+                "the instance object shall be"
+                " a Type object different of list, tuple or set"
+            )),
+            expectedValue=type,
+            realValue=f"{instance} ({type(instance)})",
+        )
+        raise TypeError(msg)
+
+    if isinstance(data, instance):
+        return (data,)  # force to have a one element tuple
+    elif (isinstance(data, tuple) and
+          all(isinstance(elem, instance) for elem in data)):
+        return data
+
+    # Raise error
+    msg = __createErrorMessage(
+        errorMsg= (f"The data shall be a {str(instance)}"
+                   " or a tuple of {str(instances)}"),
+        expectedValue=(f"{str(instance)} object "
+                       "or Tuple of {str(instances)} objects"),
+        realValue=data
+    )
+    raise TypeError(msg)
 
 
 # ===============================  PROTECTED CLASS  =========================
