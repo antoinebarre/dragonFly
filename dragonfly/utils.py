@@ -110,9 +110,9 @@ def skew_matrix(vect: np.ndarray) -> np.ndarray:
     return M
 
 
-"""
----------------- INPUTS CHECKS ----------------
-"""
+# ============================================================================
+#                           INPUTS CHECKS NUMPY
+# ============================================================================
 
 
 def __input_check_3x1(x_in):
@@ -125,35 +125,35 @@ def __input_check_3x1(x_in):
     elif (isinstance(x_in, (list, tuple)) and
           len(x_in) == 3 and all(isinstance(i, (float, int)) for i in x_in)):
         return np.reshape(np.array(x_in), (3, -1))
-    else:
-        msg = "The input shall be mutable to a [3x1] numpy array"
-        msg = __createErrorMessageData(msg, x_in)
-        raise ValueError(msg)
+
+    # Raise Error
+    msg = __createErrorMessage(
+        errorMsg="The input shall be mutable to a [3x1] numpy array",
+        expectedValue="[3x1] Numpy Array",
+        realValue=f"Values: {x_in} - Type: {type(x_in)}",
+    )
+    raise ValueError(msg)
 
 
 def __input_check_3x3(x_in):
     """PRIVATE FUNCTION - check if the input is a [3x3] numpy array"""
     if isinstance(x_in, np.ndarray) and x_in.shape == (3, 3):
         return x_in
-    else:
-        msg = "The input shall a [3x3] numpy array"
-        msg = __createErrorMessageData(msg, x_in)
-        raise ValueError(msg)
+
+    # raise error
+    msg = __createErrorMessage(
+        errorMsg="The input shall a [3x3] numpy array",
+        realValue=f"Values: {x_in} - Type: {type(x_in)}"
+    )
+    raise ValueError(msg)
 
 # ===============================  Error Message  ========================
 
 
-def __createErrorMessageData(errorMsg, value):
-    msg = (f"{errorMsg}\n" +
-           f"Current Value    : {value}\n" +
-           f"Curent Data Type : {type(value)}"
-           )
-    return msg
-
-
 def __createErrorMessage(errorMsg: str,
-                         expectedValue: str,
-                         realValue: str) -> str:
+                         expectedValue: str = "",
+                         realValue: str = "",
+                         ) -> str:
     """PRIVATE - create a generic error message
 
     Args:
@@ -208,7 +208,7 @@ def __validateFileExtension(
     filepath: str,
     validExtensions: str | tuple[str]
 ) -> str:
-    """Validate the File extension against a list of valid file
+    """Validate the File extension against a list of valid file extension
 
     Args:
         filepath (str): file path (relative or absolute)
@@ -216,38 +216,15 @@ def __validateFileExtension(
                                             (shall start with ".")
 
     Returns:
-        str: copu of the file path if the extension is correct
+        str: copy of the file path if the extension is correct
     """
 
     # arguments validation
     filepath = __validateInstance(filepath, str)
-    validExtensions = __validateInstance(validExtensions, (str, tuple))
-
-    # Analysed the expected file extension
-    if isinstance(validExtensions, str):
-        # just a string
-        tupleExtension = (validExtensions,)
-    elif (
-        isinstance(validExtensions, tuple) and
-        all(isinstance(elem, str) for elem in validExtensions)
-          ):
-        tupleExtension = validExtensions
-    else:
-        msg = ("__validateFileExtension() arg 2",
-               " must be a string or a tuple of strings"
-               )
-        msg = __createErrorMessage(
-            msg,
-            "string or tuple of strings",
-            validExtensions
-        )
+    tupleExtension = __validateExtensionDefinition(validExtensions)
 
     # get the extension
-    try:
-        file_extension = pathlib.Path(filepath).suffix
-    except Exception as e:
-        msg = f"impossible to assess the arg1 [{filepath}]"
-        raise Exception(msg).with_traceback(e.__traceback__)
+    file_extension = pathlib.Path(filepath).suffix
 
     if file_extension in tupleExtension:
         return filepath
@@ -263,7 +240,7 @@ def isValidExtension(
     filepath: str,
     expectedExtensions: str | tuple[str]
 ) -> bool:
-    """check if a string has an appropriate extension
+    """check if a path has an appropriate extension
 
     Args:
         filepath (str): file path to test
@@ -284,8 +261,36 @@ def isValidExtension(
         raise Exc
 
 
+def __validateExtensionDefinition(
+        extension2validate: str | tuple[str]) -> tuple[str]:
+    """Validate if a string is an appropriate extensions definition
+    (ie. start with a point) and return the same data if OK as a tuple
+
+    Args:
+        extension2validate (str | tuple[str]): extension definition to validate
+
+    Returns:
+        tuple[str]: tuple of valid extension
+    """
+    # check if string
+    extension2validate = __validateTupleInstances(extension2validate, str)
+
+    if all(elem.startswith('.') for elem in extension2validate):
+        return extension2validate
+
+    # raise error
+    msg = __createErrorMessage(
+        errorMsg=(
+            "The extension definition shall start with '.'"
+        ),
+        expectedValue="example '.py', '.txt'",
+        realValue=f"{extension2validate}"
+    )
+    raise ValueError(msg)
+
+
 def __validateFolder(folderpath: str) -> str:
-    """check if the file exists and provide the absolute path
+    """check if the folder exists and provide the absolute path
 
     Args:
         folderpath (str): folder path to asses (relative or absolute)
@@ -312,6 +317,55 @@ def __validateFolder(folderpath: str) -> str:
         f"Not a folder [{folderpath}]"
     )
     raise ValueError(msg)
+
+
+def listdirectory(dirpath: str, *,
+                  extensions: str | tuple[str] = (),
+                  excluded_folders: str | tuple[str] = ()) -> list[str]:
+    """get the list of the files in a directory and subdirectories
+    with possibility to select extensions and exclude some folders
+
+    Args:
+        dirpath (str): path of the directory to assess (absolute or relative)
+        extensions (str | tuple[str], optional): tuple of the
+         selected extension.
+            Defaults all with ().
+        excluded_folders (str | tuple[str], optional): tuple of
+         folders to exclude.
+            Defaults all with ().
+
+    Returns:
+        list[str]: _description_
+    """
+    # define folder exclusion strategy
+    grab_all_folders = False
+    if not excluded_folders:
+        grab_all_folders = True
+
+    # define extension strategy
+    if not extensions:
+        grab_all_extensions = True
+    else:
+        extensions = __validateExtensionDefinition(extensions)
+        grab_all_extensions = False
+
+    # initiate result
+    result = set()
+
+    # iterate over files
+    for dir_, _, files in os.walk(dirpath):
+
+        if ((not any(substring in dir_
+                     for substring in excluded_folders))
+           or grab_all_folders):
+            for file_name in files:
+                if ((pathlib.Path(file_name).suffix in extensions)
+                   or grab_all_extensions):
+                    rel_dir = os.path.relpath(dir_, dirpath)
+                    rel_file = os.path.join(rel_dir, file_name)
+                    result.add(rel_file)
+
+    return list(result)
 
 
 def __readASCIIFile(filePath: str | bytes | os.PathLike) -> str:
@@ -348,6 +402,7 @@ def __validateInstance(
 
     # Nested evaluation function
     def evaluateType(data, listTypes, inheritance) -> bool:
+        """Evaluate Type depending of the inheritance option"""
         if inheritance:
             # with inheritance
             return isinstance(data, listTypes)
@@ -356,36 +411,104 @@ def __validateInstance(
             return type(data) in listTypes
 
     # check the list of accepted types
-    if isinstance(instances, type):
-        listTypes = (instances,)  # force to have a one element tuple
-    elif (isinstance(instances, tuple) and
-          all(isinstance(elem, type) for elem in instances)):
-        listTypes = instances
-    else:
-        msg = "__validateInstance() arg 2 must be a type or a tuple of types"
-        msg = __createErrorMessage(
-            msg,
-            "type or tuple of types",
-            type(data)
-        )
-        raise ValueError(msg)
+    listTypes = __validateTupleInstances(
+        data=instances,
+        instance=type,
+    )
 
     if evaluateType(data, listTypes, inheritance):
         return data
 
     # raise error
-    msg = ("The input shall respected the"
-           f" expected types (inheritance: {inheritance})")
-    msg = __createErrorMessage(msg, instances, type(data))
+    msg = __createErrorMessage(
+        errorMsg=("The input shall respected the"
+                  f" expected types (inheritance: {inheritance})"),
+        expectedValue=instances,
+        realValue=f"{data} ({type(data)})",
+    )
     raise TypeError(msg)
 
 
-def __validateListInstances(dataList: List, instances) -> List:
-    raise NotImplementedError("To be done")
+def __validateListInstances(data: Any, instance) -> List:
+    """Check if data is a list of instance object
+
+    Args:
+        data (any): object to analyze (instance object or
+        list of instance objects)
+        instance (type): type of the content of the expected list
+
+    Returns:
+        list: list of instance objects
+    """
+
+    # check instance data type
+    if (not isinstance(instance, type)) or instance in (list, set, tuple):
+        msg = __createErrorMessage(
+            errorMsg=((
+                "the instance object shall be"
+                " a Type object different of list, tuple or set"
+            )),
+            expectedValue=type,
+            realValue=f"{instance} ({type(instance)})",
+        )
+        raise TypeError(msg)
+
+    if isinstance(data, instance):
+        return [data, ]  # force to have a one element tuple
+    elif (isinstance(data, list) and
+          all(isinstance(elem, instance) for elem in data)):
+        return data
+
+    # Raise error
+    msg = __createErrorMessage(
+        errorMsg=(f"The data shall be a {str(instance)}"
+                  f" or a list of {str(instance)}"),
+        expectedValue=(f"{str(instance)} object "
+                       f"or list of {str(instance)} objects"),
+        realValue=data
+    )
+    raise TypeError(msg)
 
 
-def __validateTupleInstances(dataList: Tuple, instances) -> List:
-    raise NotImplementedError("To be done")
+def __validateTupleInstances(data: any, instance: type) -> tuple:
+    """Check if data is a tuple of instance object
+
+    Args:
+        data (any): object to analyze
+        (instance object or tuple of instance objects)
+        instances (type): type of the content of the expected tuple
+
+    Returns:
+        tuple: tuple of instance objects
+    """
+
+    # check instance data type
+    if (not isinstance(instance, type)) or instance in (list, set, tuple):
+        msg = __createErrorMessage(
+            errorMsg=((
+                "the instance object shall be"
+                " a Type object different of list, tuple or set"
+            )),
+            expectedValue=type,
+            realValue=f"{instance} ({type(instance)})",
+        )
+        raise TypeError(msg)
+
+    if isinstance(data, instance):
+        return (data,)  # force to have a one element tuple
+    elif (isinstance(data, tuple) and
+          all(isinstance(elem, instance) for elem in data)):
+        return data
+
+    # Raise error
+    msg = __createErrorMessage(
+        errorMsg=(f"The data shall be a {str(instance)}"
+                  f" or a tuple of {str(instance)}"),
+        expectedValue=(f"{str(instance)} object "
+                       f"or Tuple of {str(instance)} objects"),
+        realValue=data
+    )
+    raise TypeError(msg)
 
 
 # ===============================  PROTECTED CLASS  =========================
