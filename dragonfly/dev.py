@@ -122,7 +122,6 @@ class CodeMetric(ABC):
     def setCriteria(self, criteria) -> None:
         """ Change criteria Value"""
         self.criteria_value = criteria
-        return self
 
     @staticmethod
     def _verifyLetter(item2check, validList):
