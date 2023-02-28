@@ -21,20 +21,20 @@ class InvalidFileExtension(Exception):
     pass
 
 
-def _assertInstance(data_name: str, data, expected_Instance) -> None:
-    """PRIVATE TOOLS - used to standardize the error message for Instance
-    assessment in dragonFly
+# def _assertInstance(data_name: str, data, expected_Instance) -> None:
+#     """PRIVATE TOOLS - used to standardize the error message for Instance
+#     assessment in dragonFly
 
-    Args:
-        data_name (str): name of the data
-        data (str): value to assess
-        expected_Instance (str): expected data type
-    """
+#     Args:
+#         data_name (str): name of the data
+#         data (str): value to assess
+#         expected_Instance (str): expected data type
+#     """
 
-    if not isinstance(data, expected_Instance):
-        message = (f"{data_name} shall be of the following type(s) :"
-                   f" {expected_Instance} [current{type(data)}] ")
-        raise TypeError(message)
+#     if not isinstance(data, expected_Instance):
+#         message = (f"{data_name} shall be of the following type(s) :"
+#                    f" {expected_Instance} [current{type(data)}] ")
+#         raise TypeError(message)
 
 
 """

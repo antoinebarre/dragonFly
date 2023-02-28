@@ -7,7 +7,7 @@
 import numpy as np
 import math
 from .constant import EarthModel, _DEFAULT_MODEL
-from .utils import _assertInstance
+from .utils import __validateInstance as validateInstance
 from .utils import rotx, roty, rotz
 
 """
@@ -129,9 +129,15 @@ class Position:
         """
 
         # IO management
-        _assertInstance("latitude", lat, (float, int, long))
-        _assertInstance("longitude", long, (float, int, long))
-        _assertInstance("altitude", alt, (float, int, long))
+        list_type = (
+            float,
+            int,
+            np.float64
+        )
+
+        lat = validateInstance(lat, list_type)
+        long = validateInstance(long, list_type)
+        alt = validateInstance(alt, list_type)
 
         # create EarthModel
         earth = EarthModel(ellipsoid)
