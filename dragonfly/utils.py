@@ -111,7 +111,7 @@ def skew_matrix(vect: np.ndarray) -> np.ndarray:
 
 
 # ============================================================================
-#                           INPUTS CHECKS NUMPY        
+#                           INPUTS CHECKS NUMPY
 # ============================================================================
 
 
@@ -125,12 +125,12 @@ def __input_check_3x1(x_in):
     elif (isinstance(x_in, (list, tuple)) and
           len(x_in) == 3 and all(isinstance(i, (float, int)) for i in x_in)):
         return np.reshape(np.array(x_in), (3, -1))
-    
+
     # Raise Error
     msg = __createErrorMessage(
-        errorMsg= "The input shall be mutable to a [3x1] numpy array",
-        expectedValue= "[3x1] Numpy Array",
-        realValue= f"Values: {x_in} - Type: {type(x_in)}",
+        errorMsg="The input shall be mutable to a [3x1] numpy array",
+        expectedValue="[3x1] Numpy Array",
+        realValue=f"Values: {x_in} - Type: {type(x_in)}",
     )
     raise ValueError(msg)
 
@@ -139,7 +139,7 @@ def __input_check_3x3(x_in):
     """PRIVATE FUNCTION - check if the input is a [3x3] numpy array"""
     if isinstance(x_in, np.ndarray) and x_in.shape == (3, 3):
         return x_in
-   
+
     # raise error
     msg = __createErrorMessage(
         errorMsg="The input shall a [3x3] numpy array",
@@ -149,9 +149,11 @@ def __input_check_3x3(x_in):
 
 # ===============================  Error Message  ========================
 
+
 def __createErrorMessage(errorMsg: str,
-                         expectedValue: str ="",
-                         realValue: str ="") -> str :
+                         expectedValue: str = "",
+                         realValue: str = "",
+                         ) -> str:
     """PRIVATE - create a generic error message
 
     Args:
@@ -223,7 +225,7 @@ def __validateFileExtension(
 
     # get the extension
     file_extension = pathlib.Path(filepath).suffix
-    
+
     if file_extension in tupleExtension:
         return filepath
 
@@ -271,11 +273,11 @@ def __validateExtensionDefinition(
         tuple[str]: tuple of valid extension
     """
     # check if string
-    extension2validate=__validateTupleInstances(extension2validate, str)
-    
+    extension2validate = __validateTupleInstances(extension2validate, str)
+
     if all(elem.startswith('.') for elem in extension2validate):
         return extension2validate
-    
+
     # raise error
     msg = __createErrorMessage(
         errorMsg=(
@@ -400,6 +402,7 @@ def __validateInstance(
 
     # Nested evaluation function
     def evaluateType(data, listTypes, inheritance) -> bool:
+        """Evaluate Type depending of the inheritance option"""
         if inheritance:
             # with inheritance
             return isinstance(data, listTypes)
@@ -430,15 +433,16 @@ def __validateListInstances(data: Any, instance) -> List:
     """Check if data is a list of instance object
 
     Args:
-        data (any): object to analyze (instance object or list of instance objects)
+        data (any): object to analyze (instance object or
+        list of instance objects)
         instance (type): type of the content of the expected list
 
     Returns:
         list: list of instance objects
     """
-    
+
     # check instance data type
-    if (not isinstance(instance,type)) or instance in (list,set,tuple):
+    if (not isinstance(instance, type)) or instance in (list, set, tuple):
         msg = __createErrorMessage(
             errorMsg=((
                 "the instance object shall be"
@@ -450,15 +454,15 @@ def __validateListInstances(data: Any, instance) -> List:
         raise TypeError(msg)
 
     if isinstance(data, instance):
-        return [data,]  # force to have a one element tuple
+        return [data, ]  # force to have a one element tuple
     elif (isinstance(data, list) and
           all(isinstance(elem, instance) for elem in data)):
         return data
 
     # Raise error
     msg = __createErrorMessage(
-        errorMsg= (f"The data shall be a {str(instance)}"
-                   f" or a list of {str(instance)}"),
+        errorMsg=(f"The data shall be a {str(instance)}"
+                  f" or a list of {str(instance)}"),
         expectedValue=(f"{str(instance)} object "
                        f"or list of {str(instance)} objects"),
         realValue=data
@@ -466,19 +470,20 @@ def __validateListInstances(data: Any, instance) -> List:
     raise TypeError(msg)
 
 
-def __validateTupleInstances(data: any, instance:type) -> tuple:
+def __validateTupleInstances(data: any, instance: type) -> tuple:
     """Check if data is a tuple of instance object
 
     Args:
-        data (any): object to analyze (instance object or tuple of instance objects)
+        data (any): object to analyze
+        (instance object or tuple of instance objects)
         instances (type): type of the content of the expected tuple
 
     Returns:
         tuple: tuple of instance objects
     """
-    
+
     # check instance data type
-    if (not isinstance(instance,type)) or instance in (list,set,tuple):
+    if (not isinstance(instance, type)) or instance in (list, set, tuple):
         msg = __createErrorMessage(
             errorMsg=((
                 "the instance object shall be"
@@ -497,8 +502,8 @@ def __validateTupleInstances(data: any, instance:type) -> tuple:
 
     # Raise error
     msg = __createErrorMessage(
-        errorMsg= (f"The data shall be a {str(instance)}"
-                   f" or a tuple of {str(instance)}"),
+        errorMsg=(f"The data shall be a {str(instance)}"
+                  f" or a tuple of {str(instance)}"),
         expectedValue=(f"{str(instance)} object "
                        f"or Tuple of {str(instance)} objects"),
         realValue=data
