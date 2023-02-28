@@ -9,7 +9,7 @@ collect all the utility fonction of dragonFly
 import numpy as np
 import os
 from scipy.spatial.transform import Rotation
-from typing import Any, List, Tuple
+import typing  # import Any, List, Tuple
 import pathlib
 
 
@@ -19,22 +19,6 @@ import pathlib
 class InvalidFileExtension(Exception):
     "Raised when the file path has not the appropriate extension"
     pass
-
-
-# def _assertInstance(data_name: str, data, expected_Instance) -> None:
-#     """PRIVATE TOOLS - used to standardize the error message for Instance
-#     assessment in dragonFly
-
-#     Args:
-#         data_name (str): name of the data
-#         data (str): value to assess
-#         expected_Instance (str): expected data type
-#     """
-
-#     if not isinstance(data, expected_Instance):
-#         message = (f"{data_name} shall be of the following type(s) :"
-#                    f" {expected_Instance} [current{type(data)}] ")
-#         raise TypeError(message)
 
 
 """
@@ -232,7 +216,11 @@ def __validateFileExtension(
     # raise error
 
     msg = f"The file [{filepath}] has not the appropriate extension"
-    msg = __createErrorMessage(msg, tupleExtension, file_extension)
+    msg = __createErrorMessage(
+        errorMsg=msg,
+        expectedValue=str(tupleExtension),
+        realValue=file_extension,
+        )
     raise InvalidFileExtension(msg)
 
 
@@ -273,10 +261,13 @@ def __validateExtensionDefinition(
         tuple[str]: tuple of valid extension
     """
     # check if string
-    extension2validate = __validateTupleInstances(extension2validate, str)
+    extension2validate = __validateTupleInstances(
+        data=extension2validate,
+        instance=str,
+    )  # type: ignore
 
     if all(elem.startswith('.') for elem in extension2validate):
-        return extension2validate
+        return extension2validate  # type: ignore
 
     # raise error
     msg = __createErrorMessage(
@@ -320,8 +311,8 @@ def __validateFolder(folderpath: str) -> str:
 
 
 def listdirectory(dirpath: str, *,
-                  extensions: str | tuple[str] = (),
-                  excluded_folders: str | tuple[str] = ()) -> list[str]:
+                  extensions: str | tuple[str] = (""),
+                  excluded_folders: str | tuple[str] = ("")) -> list[str]:
     """get the list of the files in a directory and subdirectories
     with possibility to select extensions and exclude some folders
 
@@ -329,10 +320,10 @@ def listdirectory(dirpath: str, *,
         dirpath (str): path of the directory to assess (absolute or relative)
         extensions (str | tuple[str], optional): tuple of the
          selected extension.
-            Defaults all with ().
+            Defaults all with ("").
         excluded_folders (str | tuple[str], optional): tuple of
          folders to exclude.
-            Defaults all with ().
+            Defaults all with ("").
 
     Returns:
         list[str]: _description_
@@ -368,7 +359,7 @@ def listdirectory(dirpath: str, *,
     return list(result)
 
 
-def __readASCIIFile(filePath: str | bytes | os.PathLike) -> str:
+def __readASCIIFile(filePath: str | os.PathLike[str]) -> str:
     """PRIVATE - read an existing ASCII File
 
     Args:
@@ -384,10 +375,10 @@ def __readASCIIFile(filePath: str | bytes | os.PathLike) -> str:
 
 
 def __validateInstance(
-    data: Any,
-    instances: type | List[type] | Tuple[type],
+    data: typing.Any,
+    instances: type | list[type] | tuple[type],
     inheritance: bool = False
-) -> Any:
+) -> typing.Any:
     """validate if a data as the appropriate type
 
     Args:
@@ -423,13 +414,13 @@ def __validateInstance(
     msg = __createErrorMessage(
         errorMsg=("The input shall respected the"
                   f" expected types (inheritance: {inheritance})"),
-        expectedValue=instances,
+        expectedValue=str(instances),
         realValue=f"{data} ({type(data)})",
     )
     raise TypeError(msg)
 
 
-def __validateListInstances(data: Any, instance) -> List:
+def __validateListInstances(data: typing.Any, instance) -> list:
     """Check if data is a list of instance object
 
     Args:
@@ -448,7 +439,7 @@ def __validateListInstances(data: Any, instance) -> List:
                 "the instance object shall be"
                 " a Type object different of list, tuple or set"
             )),
-            expectedValue=type,
+            expectedValue=str(type),
             realValue=f"{instance} ({type(instance)})",
         )
         raise TypeError(msg)
@@ -470,7 +461,9 @@ def __validateListInstances(data: Any, instance) -> List:
     raise TypeError(msg)
 
 
-def __validateTupleInstances(data: any, instance: type) -> tuple:
+def __validateTupleInstances(data: typing.Any | tuple[typing.Any],
+                             instance: type,
+                             ) -> tuple:
     """Check if data is a tuple of instance object
 
     Args:
@@ -489,7 +482,7 @@ def __validateTupleInstances(data: any, instance: type) -> tuple:
                 "the instance object shall be"
                 " a Type object different of list, tuple or set"
             )),
-            expectedValue=type,
+            expectedValue=str(type),
             realValue=f"{instance} ({type(instance)})",
         )
         raise TypeError(msg)
@@ -506,7 +499,7 @@ def __validateTupleInstances(data: any, instance: type) -> tuple:
                   f" or a tuple of {str(instance)}"),
         expectedValue=(f"{str(instance)} object "
                        f"or Tuple of {str(instance)} objects"),
-        realValue=data
+        realValue=str(data)
     )
     raise TypeError(msg)
 
@@ -521,8 +514,8 @@ class ImmutableClass:
     see: https://medium.datadriveninvestor.com/immutability-in-python-d57a3b23f336 # noqa: E501
 
     '''
-    __slots__ = []
-    _frozen = False
+    __slots__ = []  # type: ignore
+    _frozen: bool = False
 
     def __init__(self):
         # generate __slots__ list dynamically
