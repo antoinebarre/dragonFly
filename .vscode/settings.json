@@ -3,5 +3,16 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "coffeebreak.emails": [
+        "antoine.barre@sbg-systems.com"
+    ],
+    "coffeebreak.mentions": {
+        "ABE": {
+            "email": "antoine.barre@sbg-systems.com"
+        }
+    },
+    "coffeebreak.sync": {
+        "command": "coffeebreak.todoist.sync"
+    }
 }

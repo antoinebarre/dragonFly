@@ -11,6 +11,7 @@ import os
 from scipy.spatial.transform import Rotation
 import typing  # import Any, List, Tuple
 import pathlib
+from typing import Any
 
 
 # EXCEPTION CREATOR
@@ -373,6 +374,37 @@ def __readASCIIFile(filePath: str | os.PathLike[str]) -> str:
 
 # ===================== DATA VALIDATION ===========================
 
+def validateLetter(
+    data: Any,
+    letterList: tuple[str] = ('A', 'B', 'C', 'D', 'E'),
+) -> str:
+    """_summary_
+
+    Args:
+        data (Any): data to assess (shall be a string)
+        letterList (tuple[str], optional): list of valid letters.
+        Defaults to ('A', 'B', 'C', 'D', 'E').
+
+    Returns:
+        str: data if data is in the list of string
+    """
+
+    # check inputs
+    data = __validateInstance(data,str)
+    letterList = __validateTupleInstances(
+        data=letterList,
+        instance=str,
+    )
+
+    # assessement
+    if data not in letterList:
+        msg = ("The Letter is not in the authorized list ",
+                f"({letterList}) "
+                f"Current :{data}")
+        raise ValueError(msg)
+
+    return data
+
 
 def __validateInstance(
     data: typing.Any,
@@ -532,3 +564,4 @@ class ImmutableClass:
         if self._frozen:
             raise AttributeError('This object is immutable')
         object.__setattr__(self, *args, **kwargs)
+
