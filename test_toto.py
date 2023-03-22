@@ -1,9 +1,9 @@
 import dragonfly
 
-from dragonfly.constant import EarthModel
+from dragonfly.constants import EarthModel
 
-a = dragonfly.constant.LINE_SIZE
+a = dragonfly.constants.LINE_SIZE
 print(a)
 
-ee = dragonfly.constant.EarthModel()
+ee = dragonfly.constants.EarthModel()
 print(ee.earthRotationRate)
