@@ -1,7 +1,6 @@
-"""_UNIT TEST FOR Position Class
 """
-
-
+# ===================== UNIT TEST FOR Position Class ==================== #
+"""
 
 # MODULE IMPORT
 from dragonfly.geography import Position
@@ -24,8 +23,6 @@ LLA4ECEF = [
     "LLA"  : [35,-12,1234]}, #lat lon alt (deg,deg,m)
     {"ECEF": [ 1193872.96, 1584322.93, -6064737.91 ],
     "LLA"  : [-72,53,22135]}]
-
-
 
 
 @pytest.fixture

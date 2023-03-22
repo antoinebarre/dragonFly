@@ -6,7 +6,7 @@ EXPECTED_VALUES = [
 ]
 
 #Import Module
-from dragonfly.constant import EarthModel
+from dragonfly.constants import EarthModel
 import pytest
 
 ABSOLUTE_TOLERANCE = 1e-12

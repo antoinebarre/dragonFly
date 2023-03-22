@@ -4,9 +4,8 @@
 # MODULE IMPORT
 from dragonfly.geography import Position
 from dragonfly.gravity import Gravity
-import pytest
 import numpy as np
-import math
+
 
 
 ABSOLUTE_TOLERANCE  = 1e-12

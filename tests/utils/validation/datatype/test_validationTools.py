@@ -4,11 +4,11 @@
 
 
 # MODULE IMPORT
-import dragonfly.utils as df
+import dragonfly as dgf
 import pytest
 import numpy as np
 import math
-import builtins as b
+
 
 
 # CONSTANTS:
@@ -26,21 +26,21 @@ def test__validateInstance() -> None:
             value = assessedType()
             if testedType == assessedType:
                 try:
-                    valOut = df.__validateInstance(value, testedType)
+                    valOut = dgf.utils.validation.validateInstance(value, testedType)
 
                     assert valOut is value, f"Error raised for tested type {testedType} and assessed type {assessedType}"
                 except Exception:
                     assert False, f"Error raised for tested type {testedType} and assessed type {assessedType}"
             else:
                 with pytest.raises(TypeError) as e_info:
-                    df.__validateInstance(value, testedType)
+                    dgf.utils.validation.validateInstance(value, testedType)
 
     # test with tuple (OK)
     try:
         testedType = (bool, str)
         assessedType = bool
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType)
 
         assert valOut is value, f"Error raised for tested type {testedType} and assessed type {assessedType}"
 
@@ -48,7 +48,7 @@ def test__validateInstance() -> None:
         testedType = (float, int, tuple)
         assessedType = float
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType)
 
         assert valOut is value, f"Error raised for tested type {testedType} and assessed type {assessedType}"
 
@@ -56,7 +56,7 @@ def test__validateInstance() -> None:
         testedType = (float, int, tuple)
         assessedType = bool
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType, inheritance=True)
+        valOut = dgf.utils.validation.validateInstance(value, testedType, inheritance=True)
 
         assert valOut is value, f"Error raised for tested type {testedType} and assessed type {assessedType}"
 
@@ -68,29 +68,29 @@ def test__validateInstance() -> None:
         testedType = (float, int, tuple)
         assessedType = bool
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType, inheritance=False)
-        df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType, inheritance=False)
+        dgf.utils.validation.validateInstance(value, testedType)
 
     with pytest.raises(TypeError):
         testedType = (float, int)
         assessedType = str
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType, inheritance=False)
-        df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType, inheritance=False)
+        dgf.utils.validation.validateInstance(value, testedType)
 
     with pytest.raises(TypeError):
         testedType = [float, int]
         assessedType = str
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType, inheritance=False)
-        df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType, inheritance=False)
+        dgf.utils.validation.validateInstance(value, testedType)
 
     with pytest.raises(TypeError):
         testedType = (float, "a")
         assessedType = str
         value = assessedType()
-        valOut = df.__validateInstance(value, testedType, inheritance=False)
-        df.__validateInstance(value, testedType)
+        valOut = dgf.utils.validation.validateInstance(value, testedType, inheritance=False)
+        dgf.utils.validation.validateInstance(value, testedType)
     
     pass
 
@@ -98,23 +98,23 @@ def test_validateTupleInstances():
     
     #bad params
     with pytest.raises(TypeError):
-        df.__validateTupleInstances("toto","str")
+        dgf.utils.validation.validateTupleInstances("toto","str")
     
     with pytest.raises(TypeError):
-        df.__validateTupleInstances("toto",list)
+        dgf.utils.validation.validateTupleInstances("toto",list)
         
     with pytest.raises(TypeError):
-         df.__validateTupleInstances(("str",1),str)
+         dgf.utils.validation.validateTupleInstances(("str",1),str)
          
     # good value
     expectedValue = ("a",)
-    val = df.__validateTupleInstances("a",str)
+    val = dgf.utils.validation.validateTupleInstances("a",str)
     assert val[0] == expectedValue[0]
     assert len(val)==1
     assert isinstance(val,tuple)
     
     expectedValue = ("a","b")
-    val = df.__validateTupleInstances(expectedValue,str)
+    val = dgf.utils.validation.validateTupleInstances(expectedValue,str)
     assert val is expectedValue
     
  
@@ -122,22 +122,22 @@ def test_validateListInstances():
     
     #bad params
     with pytest.raises(TypeError):
-        df.__validateListInstances("toto","str")
+        dgf.utils.validation.validateListInstances("toto","str")
     
     with pytest.raises(TypeError):
-        df.__validateListInstances("toto",list)
+        dgf.utils.validation.validateListInstances("toto",list)
         
     with pytest.raises(TypeError):
-         df.__validateListInstances(["str",1],str)
+         dgf.utils.validation.validateListInstances(["str",1],str)
          
     # good value
     expectedValue = ["a"]
-    val = df.__validateListInstances("a",str)
+    val = dgf.utils.validation.validateListInstances("a",str)
     assert val[0] == expectedValue[0]
     assert len(val)==1
     assert isinstance(val,list)
     
     expectedValue = ["a","b"]
-    val = df.__validateListInstances(expectedValue,str)
+    val = dgf.utils.validation.validateListInstances(expectedValue,str)
     assert val is expectedValue    
     

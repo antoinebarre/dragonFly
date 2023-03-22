@@ -2,10 +2,20 @@
 --------------   GRAVITY MODEL  --------------
 """
 
+# EXPORT
+__all__ = [
+    "Gravity",
+]
+
 # Import Module
-from .geography import Position
-from .constant import EarthModel, _DEFAULT_MODEL
 import numpy as np
+import dragonfly
+from dragonfly.geography import Position
+from dragonfly.constants import EarthModel
+
+
+# PARAMERTERS
+_DEFAULT_MODEL = dragonfly.constants.DEFAULT_SETTINGS.EarthEllipsoid
 
 
 class Gravity():

@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 
-from dragonfly.geography import DCM_ECI2ECEF, dcm_ecef2ned, dcm_ecef2enu, angle2dcm, dcm2angle
+from dragonfly.geography import dcm_eci2ecef, dcm_ecef2ned, dcm_ecef2enu, angle2dcm, dcm2angle
 
 
 ABSOLUTE_TOLERANCE = 1e-12
@@ -20,7 +20,7 @@ def test_ECI2ECEF()->None:
     """
 
     # assert when dt=0
-    np.testing.assert_array_almost_equal(DCM_ECI2ECEF(0),np.identity(3),decimal=NB_DECIMAL)
+    np.testing.assert_array_almost_equal(dcm_eci2ecef(0),np.identity(3),decimal=NB_DECIMAL)
 
     #TODO : complete the test cases
     #see https://github.com/geospace-code/pymap3d/blob/main/src/pymap3d/tests/test_eci.py

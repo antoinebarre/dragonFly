@@ -4,8 +4,9 @@
 # import module
 import pytest
 import numpy as np
+import dragonfly
 
-from dragonfly.utils import rotx,roty,rotz
+from dragonfly.utils.math import rotx,roty,rotz,RotationMatrixError
 
 
 ABSOLUTE_TOLERANCE = 1e-12
@@ -24,9 +25,9 @@ def randomAngleArray():
 def test_rotx_error():
     """Check appropriate behavior with wrong inputs
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(RotationMatrixError):
         rotx("a")
-    with pytest.raises(TypeError):
+    with pytest.raises(RotationMatrixError):
         rotx([1,2])
 
 def test_rotx_determinant(randomAngleArray):
@@ -84,9 +85,10 @@ def test_roty_behaviour():
 def test_roty_error():
     """Check appropriate behavior with wrong inputs
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(RotationMatrixError):
         roty("a")
-    with pytest.raises(TypeError):
+        
+    with pytest.raises(RotationMatrixError):
         roty([1,2])
 
 def test_rotz_determinant(randomAngleArray):
@@ -118,9 +120,9 @@ def test_rotz_behaviour():
 def test_rotz_error():
     """Check appropriate behavior with wrong inputs
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(RotationMatrixError):
         rotz("a")
-    with pytest.raises(TypeError):
+    with pytest.raises(RotationMatrixError):
         rotz([1,2])
 
 #---------------- TOOLS ----------------

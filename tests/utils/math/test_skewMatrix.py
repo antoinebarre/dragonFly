@@ -2,7 +2,7 @@
 """
 
 # MODULE IMPORT
-import dragonfly.utils
+import dragonfly
 
 import numpy as np
 
@@ -16,12 +16,12 @@ def test_skew_matrix():
     """
 
     # input
-    X = dragonfly.utils. __input_check_3x1(np.array([1, 2, 3]))
-    y = dragonfly.utils. __input_check_3x1(np.array([4, 5, 6]))
-    expected_res = dragonfly.utils. __input_check_3x1(np.array([-3, 6, -3]))
+    X = dragonfly.utils.validation.input_check_3x1(np.array([1, 2, 3]))
+    y = dragonfly.utils.validation.input_check_3x1(np.array([4, 5, 6]))
+    expected_res = dragonfly.utils.validation.input_check_3x1(np.array([-3, 6, -3]))
 
     # calculate
-    res = dragonfly.utils.skew_matrix(X)@y
+    res = dragonfly.utils.math.skew_matrix(X)@y
 
     # assertion
     np.testing.assert_allclose(res, expected_res,

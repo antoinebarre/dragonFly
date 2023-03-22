@@ -1,11 +1,10 @@
-"""Store all the constants used by dragonFly
-"""
-
 # IMPORTED MODULES
 import math
 from collections import namedtuple
 
-__all__ = ["EarthModel"]
+__all__ = [
+    "EarthModel",
+]
 
 # ------------------------  GLOBAL NAMETUPLE  ------------------------
 
@@ -141,8 +140,3 @@ class EarthModel():
         return model.j2
 
     # pylint: enable=invalid-name
-
-# ----------------------  VISUAL FRAMEWORK  -------------------
-
-
-LINE_SIZE = 78
