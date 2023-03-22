@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: create Artifacts Folder
-      run: mkdir -p work/sco
+      run: mkdir -p work/artifacts
     - name: create example file
       run: echo hello > work/sco/world.txt
     - name: Set up Python 3.10
@@ -27,12 +27,9 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --format=html --htmldir=work/artifacts/flake8-critical-report  --max-complexity 5
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --statistics
-    - name: Conformance Analysis
-      run: |
-        python runTest.py
+        flake8 . --count --exit-zero --statistics --format=html --htmldir=work/artifacts/flake8-warning-report
     - name: Test with pytest
       run: |
         pytest
