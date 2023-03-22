@@ -45,19 +45,19 @@ def test_isvalidExtension():
 def test_validateExtensionDefinition():
     """ test the validation of the extension inputs"""
     
-    from dragonfly.utils.validation.__paths import __validateExtensionDefinition
+    
     
     # bad extension
     with pytest.raises(ValueError):
-        __validateExtensionDefinition("toto")
+        dragonfly.utils.validation.validateExtensionDefinition("toto")
         
     with pytest.raises(ValueError):
-        __validateExtensionDefinition((".c","f"))
+        dragonfly.utils.validation.validateExtensionDefinition((".c","f"))
     
     # good extension definition
     
     val_init = (".c",".f")
-    val = __validateExtensionDefinition(val_init)
+    val = dragonfly.utils.validation.validateExtensionDefinition(val_init)
     assert val is val_init
     
 def test_validateFolder():

@@ -8,6 +8,7 @@ __all__ = [
     "validateFileExtension",
     "isValidExtension",
     "validateFolder",
+    "validateExtensionDefinition"
 ]
 
 # IMPORT
@@ -70,7 +71,7 @@ def validateFileExtension(
 
     # arguments validation
     filepath = validateInstance(filepath, str)
-    tupleExtension = __validateExtensionDefinition(validExtensions)
+    tupleExtension = validateExtensionDefinition(validExtensions)
 
     # get the extension
     file_extension = pathlib.Path(filepath).suffix
@@ -114,7 +115,7 @@ def isValidExtension(
         raise Exc
 
 
-def __validateExtensionDefinition(
+def validateExtensionDefinition(
         extension2validate: str | tuple[str]) -> tuple[str]:
     """PRIVATE - Validate if a string is an appropriate extensions definition
     (ie. start with a point) and return the same data if OK as a tuple
