@@ -11,8 +11,6 @@ jobs:
     - uses: actions/checkout@v3
     - name: create Artifacts Folder
       run: mkdir -p work/artifacts
-    - name: create example file
-      run: echo hello > work/sco/world.txt
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
