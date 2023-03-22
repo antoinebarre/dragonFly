@@ -5,3 +5,4 @@
 """
 
 from .__rotationMatrix import *
+from .__position import *

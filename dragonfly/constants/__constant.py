@@ -2,14 +2,27 @@
 """
 
 __all__ = [
-    "VISUAL_FRAMEWORK"
+    "VISUAL_FRAMEWORK",
+    "DEFAULT_SETTINGS",
 ]
 
 # IMPORT PACKAGE
 from collections import namedtuple
 
+# ---------------------------- DEFAULT VALUE ---------------------------- #
+DefaultSettings = namedtuple(
+    typename="DefaultSettings",
+    field_names=[
+        "EarthEllipsoid",  # Name of the default ellipsoid model
+    ]
+)
 
-# ----------------------  VISUAL FRAMEWORK  -------------------
+DEFAULT_SETTINGS = DefaultSettings(
+    EarthEllipsoid="WGS84",
+)
+
+
+# --------------------------- VISUAL FRAMEWORK -------------------------- #
 
 VisualFramework = namedtuple(
     typename="VisualFrameWork",
