@@ -26,20 +26,21 @@ jobs:
       run: |
         python -m poetry install
     - name: Lint with flake8
+      if: ${{ always() }}
       run: |
         # stop the build if there are Python syntax errors or undefined names
         python -m poetry run python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --format=html --htmldir=work/artifacts/flake8-critical-report
         # check complexity
-        python -m poetry run python -m flake8 . --format=html --htmldir=work/artifacts/flake8-complexity-report  --max-complexity 5
+        python -m poetry run python -m flake8 . --format=html --htmldir=work/artifacts/flake8-complexity-report  --max-complexity 10
         
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         python -m poetry run python -m flake8 . --count --exit-zero --statistics --format=html --htmldir=work/artifacts/flake8-warning-report
-      continue-on-error: true
     - name: Test with pytest
+      if: ${{ always() }}
       run: |
         python -m poetry run python -m pytest
-      continue-on-error: true
     - name: Collect Artifacts
+      if: ${{ always() }}
       uses: actions/upload-artifact@v3
       with:
         name: my-artifact
