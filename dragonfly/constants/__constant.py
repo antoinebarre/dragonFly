@@ -10,6 +10,7 @@ __all__ = [
 from collections import namedtuple
 
 # ---------------------------- DEFAULT VALUE ---------------------------- #
+
 DefaultSettings = namedtuple(
     typename="DefaultSettings",
     field_names=[
